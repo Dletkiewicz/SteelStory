@@ -1,4 +1,4 @@
-package pl.steelstory.api;
+package pl.steelstory;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -8,11 +8,11 @@
 		<version>3.2.1</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>pl.steelstory</groupId>
-	<artifactId>api</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<name>api</name>
-	<description>Demo project for Spring Boot</description>
+	<groupId>pl</groupId>
+	<artifactId>steelstory</artifactId>
+	<version>0.0.1</version>
+	<name>steelstory</name>
+	<description>SteelStory browser game</description>
 	<properties>
 		<java.version>17</java.version>
 	</properties>
