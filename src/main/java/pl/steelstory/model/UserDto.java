@@ -1,8 +1,6 @@
 package pl.steelstory.model;
 
-public class UserDto {
+import java.util.UUID;
 
-  private String username;
-
-  private String password;
+public record UserDto(UUID businessId, String username, String password) {
 }
