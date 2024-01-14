@@ -1,14 +1,20 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NaturalId;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import pl.steelstory.model.CreateUserDto;
+import pl.steelstory.model.UserDto;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "users")
 @EntityListeners(AuditingEntityListener.class)
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserEntity {
 
   @Id
@@ -28,5 +34,24 @@ public class UserEntity {
 
   @Embedded
   private final AuditMixin audit = new AuditMixin();
+
+  public UserDto toModel() {
+    return new UserDto(businessId, username, password);
+  }
+
+  public static UserEntity create(CreateUserDto userDto) {
+    var entity = new UserEntity();
+    entity.databaseId = UUID.randomUUID();
+    entity.businessId = UUID.randomUUID();
+    entity.username = userDto.username();
+    entity.password = userDto.password();
+    return entity;
+  }
+
+  UserEntity update(CreateUserDto userDto) {
+    password = userDto.password();
+    username = userDto.username();
+    return this;
+  }
 
 }
