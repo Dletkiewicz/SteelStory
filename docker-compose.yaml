@@ -20,7 +20,7 @@ services:
     depends_on:
       - db
     environment:
-      db-url: jdbc:postgresql://db:5432/steel
+      db-url: jdbc:postgresql://db:5432/steelstory_db
       db-user: admin
       db-password: admin
     restart: always
