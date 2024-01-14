@@ -1,0 +1,29 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+    container_name: db_container
+    image: postgres
+    environment:
+      - POSTGRES_DB=steelstory_db
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    restart: always
+
+  backend:
+    build: .
+    container_name: api_container
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      db-url: jdbc:postgresql://db:5432/steel
+      db-user: admin
+      db-password: admin
+    restart: always
+
+volumes:
+  db_data:
