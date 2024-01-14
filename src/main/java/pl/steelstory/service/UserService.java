@@ -1,10 +1,12 @@
 package pl.steelstory.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.steelstory.entity.UserEntity;
 import pl.steelstory.exception.UserNotFoundException;
 import pl.steelstory.exception.UsernameTakenException;
+import pl.steelstory.model.CreateUserDto;
 import pl.steelstory.model.UserDto;
 import pl.steelstory.repository.UserRepository;
 
@@ -16,16 +18,18 @@ public class UserService {
 
   private final UserRepository users;
 
-  public UserDto save(UserDto user) {
+  @Transactional
+  public UserDto save(CreateUserDto user) {
     if (users.existsByUsername(user.username().toLowerCase())) {
       throw new UsernameTakenException(user.username());
     }
-    var entity = new UserEntity(UUID.randomUUID(), UUID.randomUUID(), user.username(), user.password());
+    var entity = UserEntity.create(user);
     users.save(entity);
 
     return entity.toModel();
   }
 
+  @Transactional
   public void delete(UUID id) {
     if (!users.existsByBusinessId(id)) {
       throw new UserNotFoundException(id);
@@ -35,9 +39,7 @@ public class UserService {
   }
 
   public UserDto get(UUID id) {
-    return users.findByBusinessId(id)
-        .map(UserEntity::toModel)
-        .orElseThrow(() -> new UserNotFoundException(id));
+    return users.findByBusinessId(id).map(UserEntity::toModel).orElseThrow(() -> new UserNotFoundException(id));
   }
 
 }

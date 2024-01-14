@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NaturalId;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import pl.steelstory.model.CreateUserDto;
 import pl.steelstory.model.UserDto;
 
 import java.util.UUID;
@@ -37,4 +38,20 @@ public class UserEntity {
   public UserDto toModel() {
     return new UserDto(businessId, username, password);
   }
+
+  public static UserEntity create(CreateUserDto userDto) {
+    var entity = new UserEntity();
+    entity.databaseId = UUID.randomUUID();
+    entity.businessId = UUID.randomUUID();
+    entity.username = userDto.username();
+    entity.password = userDto.password();
+    return entity;
+  }
+
+  UserEntity update(CreateUserDto userDto) {
+    password = userDto.password();
+    username = userDto.username();
+    return this;
+  }
+
 }
