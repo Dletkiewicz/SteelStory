@@ -2,7 +2,7 @@ package pl.steelstory.character.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
-import pl.steelstory.character.model.CharacterClass;
+import pl.steelstory.character.model.CharacterClassType;
 import pl.steelstory.user.entity.UserEntity;
 
 import java.util.UUID;
@@ -35,7 +35,7 @@ public class CharacterEntity {
 
   @Column(name = "class")
   @Enumerated(EnumType.STRING)
-  private CharacterClass characterClass;
+  private CharacterClassType characterClass;
 
   @Column(name = "strength")
   private int strength;

@@ -42,7 +42,13 @@
             </column>
             <column name="level" type="integer"/>
             <column name="experience" type="integer"/>
-
+            <column name="class" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="strength" type="integer"/>
+            <column name="dexterity" type="integer"/>
+            <column name="intelligence" type="integer"/>
+            <column name="stamina" type="integer"/>
         </createTable>
     </changeSet>
 

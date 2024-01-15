@@ -1,6 +1,6 @@
 package pl.steelstory.character.model;
 
-public enum CharacterClass {
+public enum CharacterClassType {
 
   BERSERK,
   PALADIN,
