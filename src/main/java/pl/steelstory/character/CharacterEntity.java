@@ -1,8 +1,10 @@
-package pl.steelstory.character.entity;
+package pl.steelstory.character;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.character.model.CharacterClassType;
+import pl.steelstory.character.model.dto.CharacterDto;
+import pl.steelstory.character.model.dto.CreateCharacterDto;
 import pl.steelstory.user.entity.UserEntity;
 
 import java.util.UUID;
@@ -48,4 +50,22 @@ public class CharacterEntity {
 
   @Column(name = "stamina")
   private int stamina;
+
+  CharacterDto toModel() {
+    return new CharacterDto(businessId, name, level, experience, characterClass, strength, intelligence, stamina);
+  }
+
+  static CharacterEntity create(CreateCharacterDto character) {
+    var entity = new CharacterEntity();
+    entity.businessId = UUID.randomUUID();
+    entity.name = character.name();
+    entity.level = 0;
+    entity.experience = 0;
+    entity.characterClass = character.characterClass();
+    entity.strength = 5;
+    entity.dexterity = 5;
+    entity.intelligence = 5;
+    entity.stamina = 100;
+    return entity;
+  }
 }

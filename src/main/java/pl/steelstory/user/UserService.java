@@ -1,4 +1,4 @@
-package pl.steelstory.user.service;
+package pl.steelstory.user;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -7,8 +7,7 @@ import pl.steelstory.user.entity.UserEntity;
 import pl.steelstory.user.exception.UserNotFoundException;
 import pl.steelstory.user.exception.UsernameTakenException;
 import pl.steelstory.user.model.CreateUserDto;
-import pl.steelstory.user.model.dto.UserDto;
-import pl.steelstory.user.repository.UserRepository;
+import pl.steelstory.user.model.UserDto;
 
 import java.util.UUID;
 

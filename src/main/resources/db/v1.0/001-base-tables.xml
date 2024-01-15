@@ -41,7 +41,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="level" type="integer"/>
-            <column name="experience" type="integer"/>
+            <column name="experience" type="bigint"/>
             <column name="class" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>

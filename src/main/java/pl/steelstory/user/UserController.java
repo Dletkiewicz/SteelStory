@@ -1,4 +1,4 @@
-package pl.steelstory.user.controller;
+package pl.steelstory.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -9,8 +9,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pl.steelstory.user.exception.UserNotFoundException;
 import pl.steelstory.user.exception.UsernameTakenException;
 import pl.steelstory.user.model.CreateUserDto;
-import pl.steelstory.user.model.dto.UserDto;
-import pl.steelstory.user.service.UserService;
+import pl.steelstory.user.model.UserDto;
 
 import java.util.UUID;
 

@@ -1,4 +1,4 @@
-package pl.steelstory.user.repository;
+package pl.steelstory.user;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
