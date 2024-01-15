@@ -2,6 +2,7 @@ package pl.steelstory.character;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.steelstory.character.exception.CharacterNameTakenException;
 import pl.steelstory.character.exception.CharacterNotFoundException;
 import pl.steelstory.character.model.dto.CharacterDto;
 import pl.steelstory.character.model.dto.CreateCharacterDto;
@@ -15,6 +16,10 @@ public class CharacterService {
   private final CharacterRepository characters;
 
   public CharacterDto save(CreateCharacterDto character) {
+    if (characters.existsByName(character.name())) {
+      throw new CharacterNameTakenException(character.name());
+    }
+
     var entity = CharacterEntity.create(character);
     characters.save(entity);
     return entity.toModel();
