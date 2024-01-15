@@ -1,8 +1,8 @@
-package pl.steelstory.repository;
+package pl.steelstory.user.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import pl.steelstory.entity.UserEntity;
+import pl.steelstory.user.entity.UserEntity;
 
 import java.util.Optional;
 import java.util.UUID;

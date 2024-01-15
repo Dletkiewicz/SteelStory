@@ -26,4 +26,30 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="create-table-characters" author="dletkiewicz">
+        <createTable tableName="characters">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" primaryKeyName="characters_pk"/>
+            </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="characters_business_id_un"/>
+            </column>
+            <column name="user_id" type="uuid">
+                <constraints referencedTableName="users" referencedColumnNames="id" foreignKeyName="characters_user_fk"/>
+            </column>
+            <column name="name" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="level" type="integer"/>
+            <column name="experience" type="integer"/>
+            <column name="class" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="strength" type="integer"/>
+            <column name="dexterity" type="integer"/>
+            <column name="intelligence" type="integer"/>
+            <column name="stamina" type="integer"/>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
