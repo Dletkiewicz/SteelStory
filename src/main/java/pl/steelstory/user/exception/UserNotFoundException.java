@@ -1,4 +1,4 @@
-package pl.steelstory.exception;
+package pl.steelstory.user.exception;
 
 import java.util.UUID;
 

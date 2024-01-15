@@ -1,12 +1,12 @@
-package pl.steelstory.entity;
+package pl.steelstory.user.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.NaturalId;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-import pl.steelstory.model.CreateUserDto;
-import pl.steelstory.model.UserDto;
+import pl.steelstory.user.model.CreateUserDto;
+import pl.steelstory.user.model.dto.UserDto;
 
 import java.util.UUID;
 

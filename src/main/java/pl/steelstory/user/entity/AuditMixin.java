@@ -1,4 +1,4 @@
-package pl.steelstory.entity;
+package pl.steelstory.user.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;

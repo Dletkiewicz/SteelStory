@@ -1,4 +1,4 @@
-package pl.steelstory.controller;
+package pl.steelstory.user.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -6,11 +6,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.steelstory.exception.UserNotFoundException;
-import pl.steelstory.exception.UsernameTakenException;
-import pl.steelstory.model.CreateUserDto;
-import pl.steelstory.model.UserDto;
-import pl.steelstory.service.UserService;
+import pl.steelstory.user.exception.UserNotFoundException;
+import pl.steelstory.user.exception.UsernameTakenException;
+import pl.steelstory.user.model.CreateUserDto;
+import pl.steelstory.user.model.dto.UserDto;
+import pl.steelstory.user.service.UserService;
 
 import java.util.UUID;
 

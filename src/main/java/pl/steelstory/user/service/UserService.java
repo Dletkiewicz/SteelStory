@@ -1,14 +1,14 @@
-package pl.steelstory.service;
+package pl.steelstory.user.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import pl.steelstory.entity.UserEntity;
-import pl.steelstory.exception.UserNotFoundException;
-import pl.steelstory.exception.UsernameTakenException;
-import pl.steelstory.model.CreateUserDto;
-import pl.steelstory.model.UserDto;
-import pl.steelstory.repository.UserRepository;
+import pl.steelstory.user.entity.UserEntity;
+import pl.steelstory.user.exception.UserNotFoundException;
+import pl.steelstory.user.exception.UsernameTakenException;
+import pl.steelstory.user.model.CreateUserDto;
+import pl.steelstory.user.model.dto.UserDto;
+import pl.steelstory.user.repository.UserRepository;
 
 import java.util.UUID;
 
