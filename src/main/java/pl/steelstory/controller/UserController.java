@@ -1,9 +1,13 @@
 package pl.steelstory.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import pl.steelstory.exception.UserNotFoundException;
+import pl.steelstory.exception.UsernameTakenException;
 import pl.steelstory.model.CreateUserDto;
 import pl.steelstory.model.UserDto;
 import pl.steelstory.service.UserService;
@@ -19,18 +23,30 @@ public class UserController {
 
   @GetMapping("/users/{userId}")
   public UserDto get(@PathVariable UUID userId) {
-    return users.get(userId);
+    try {
+      return users.get(userId);
+    } catch (UserNotFoundException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getLocalizedMessage(), e);
+    }
   }
 
   @PostMapping("/users")
   public ResponseEntity<UserDto> save(@RequestBody CreateUserDto payload) {
-    var user = users.save(payload);
-    return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{userId}").build(user.businessId())).body(user);
+    try {
+      var user = users.save(payload);
+      return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{userId}").build(user.businessId())).body(user);
+    } catch (UsernameTakenException e) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, e.getLocalizedMessage(), e);
+    }
   }
 
   @DeleteMapping("/users/{userId}")
   public ResponseEntity<Void> delete(@PathVariable UUID userId) {
-    users.delete(userId);
-    return ResponseEntity.noContent().build();
+    try {
+      users.delete(userId);
+      return ResponseEntity.noContent().build();
+    } catch (UserNotFoundException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getLocalizedMessage(), e);
+    }
   }
 }
