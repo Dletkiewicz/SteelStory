@@ -3,9 +3,9 @@ package pl.steelstory.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.character.CharacterClassType;
-import pl.steelstory.model.character.dto.UpdateCharacterDto;
 import pl.steelstory.model.character.dto.CharacterDto;
 import pl.steelstory.model.character.dto.CreateCharacterDto;
+import pl.steelstory.model.character.dto.UpdateCharacterDto;
 
 import java.util.UUID;
 
@@ -58,18 +58,43 @@ public class CharacterEntity {
   public static CharacterEntity create(CreateCharacterDto character) {
     var entity = new CharacterEntity();
     entity.businessId = UUID.randomUUID();
-    entity.name = character.getName();
+    entity.name = character.name();
     entity.level = 0;
     entity.experience = 0;
-    entity.characterClass = character.getCharacterClass();
-    entity.strength = character.b;
-    entity.dexterity = 5;
-    entity.intelligence = 5;
+    entity.characterClass = character.characterClass();
+    entity.setAttributes(entity);
     entity.stamina = 100;
     return entity;
   }
 
   public void update(UpdateCharacterDto character) {
     name = character.name();
+  }
+
+  private void setAttributes(CharacterEntity entity) {
+
+    switch (entity.characterClass) {
+
+      case MAGE -> {
+        entity.intelligence = 12;
+        entity.dexterity = 3;
+        entity.strength = 3;
+      }
+      case ARCHER -> {
+        entity.intelligence = 3;
+        entity.dexterity = 12;
+        entity.strength = 3;
+      }
+      case BERSERK -> {
+        entity.intelligence = 3;
+        entity.dexterity = 3;
+        entity.strength = 12;
+      }
+      case PALADIN -> {
+        entity.intelligence = 7;
+        entity.strength = 7;
+        entity.dexterity = 3;
+      }
+    }
   }
 }

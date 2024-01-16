@@ -1,11 +1,7 @@
 package pl.steelstory.model.character.dto;
 
-import lombok.Getter;
 import pl.steelstory.model.character.CharacterClassType;
 
-@Getter
-public class CreateCharacterDto {
+public record CreateCharacterDto(String name, CharacterClassType characterClass) {
 
-  private String name;
-  private CharacterClassType characterClass;
 }
