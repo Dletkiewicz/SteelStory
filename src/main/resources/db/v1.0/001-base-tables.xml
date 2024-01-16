@@ -75,6 +75,8 @@
             <column name="rarity" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
+        </createTable>
+    </changeSet>
 
     <changeSet id="create-table-weapons" author="dletkiewicz">
         <createTable tableName="weapons">

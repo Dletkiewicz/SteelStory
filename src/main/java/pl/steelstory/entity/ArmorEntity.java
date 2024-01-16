@@ -36,6 +36,4 @@ public class ArmorEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "rarity")
   private ItemRarity itemRarity;
-
-
 }
