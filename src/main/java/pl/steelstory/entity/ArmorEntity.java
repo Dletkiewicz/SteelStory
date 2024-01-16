@@ -8,7 +8,7 @@ import pl.steelstory.model.item.ItemRarity;
 import java.util.UUID;
 
 @Entity
-@Table(name = "items")
+@Table(name = "armors")
 public class ArmorEntity {
 
   @Id
@@ -24,7 +24,7 @@ public class ArmorEntity {
   private String name;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "item_type")
+  @Column(name = "type")
   private ArmorType type;
 
   @Column(name = "defense")

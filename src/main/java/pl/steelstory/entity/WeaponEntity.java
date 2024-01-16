@@ -24,7 +24,7 @@ public class WeaponEntity {
   private String name;
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "item_type")
+  @Column(name = "type")
   private WeaponType type;
 
   @Column(name = "attack")
