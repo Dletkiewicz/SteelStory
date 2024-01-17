@@ -48,6 +48,9 @@
             <column name="strength" type="integer"/>
             <column name="dexterity" type="integer"/>
             <column name="intelligence" type="integer"/>
+            <column name="attack" type="integer"/>
+            <column name="defense" type="integer"/>
+            <column name="hp" type="integer"/>
             <column name="stamina" type="integer"/>
         </createTable>
     </changeSet>
