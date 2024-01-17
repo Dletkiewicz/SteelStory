@@ -5,7 +5,6 @@ import pl.steelstory.model.item.ArmorType;
 
 @Entity
 @Table(name = "armors")
-@Inheritance(strategy = InheritanceType.JOINED)
 public class ArmorEntity extends ItemEntity {
 
   @Enumerated(EnumType.STRING)
