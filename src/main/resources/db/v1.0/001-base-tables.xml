@@ -55,21 +55,15 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="create-table-armors" author="dletkiewicz">
-        <createTable tableName="armors">
+    <changeSet id="create-table-items" author="dletkiewicz">
+        <createTable tableName="items">
             <column name="id" type="uuid">
-                <constraints primaryKey="true" primaryKeyName="armors_pk"/>
+                <constraints primaryKey="true" primaryKeyName="items_pk"/>
             </column>
             <column name="business_id" type="uuid">
-                <constraints nullable="false" unique="true" uniqueConstraintName="armors_business_id_un"/>
+                <constraints nullable="false" unique="true" uniqueConstraintName="items_business_id_un"/>
             </column>
             <column name="name" type="varchar(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="type" type="varchar(20)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="defense" type="integer">
                 <constraints nullable="false"/>
             </column>
             <column name="required_level" type="integer">
@@ -81,30 +75,25 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="create-table-weapons" author="dletkiewicz">
-        <createTable tableName="weapons">
-            <column name="id" type="uuid">
-                <constraints primaryKey="true" primaryKeyName="weapons_pk"/>
-            </column>
-            <column name="business_id" type="uuid">
-                <constraints nullable="false" unique="true" uniqueConstraintName="weapons_business_id_un"/>
-            </column>
-            <column name="name" type="varchar(20)">
+    <changeSet id="create-table-armors" author="dletkiewicz">
+        <createTable tableName="armors">
+            <column name="type" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
+            <column name="defense" type="integer">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-table-weapons" author="dletkiewicz">
+        <createTable tableName="weapons">
             <column name="type" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
             <column name="attack" type="integer">
                 <constraints nullable="false"/>
             </column>
-            <column name="required_level" type="integer">
-                <constraints nullable="false"/>
-            </column>
-            <column name="rarity" type="varchar(20)">
-                <constraints nullable="false"/>
-            </column>
-
         </createTable>
     </changeSet>
 
