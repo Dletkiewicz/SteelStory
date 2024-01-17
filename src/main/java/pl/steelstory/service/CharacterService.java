@@ -2,12 +2,12 @@ package pl.steelstory.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.steelstory.entity.CharacterEntity;
 import pl.steelstory.exception.character.CharacterNameTakenException;
 import pl.steelstory.exception.character.CharacterNotFoundException;
-import pl.steelstory.entity.CharacterEntity;
-import pl.steelstory.model.character.dto.UpdateCharacterDto;
 import pl.steelstory.model.character.dto.CharacterDto;
 import pl.steelstory.model.character.dto.CreateCharacterDto;
+import pl.steelstory.model.character.dto.UpdateCharacterDto;
 import pl.steelstory.repository.CharacterRepository;
 
 import java.util.UUID;

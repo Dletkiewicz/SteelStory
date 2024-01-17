@@ -6,12 +6,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pl.steelstory.service.CharacterService;
 import pl.steelstory.exception.character.CharacterNameTakenException;
 import pl.steelstory.exception.character.CharacterNotFoundException;
-import pl.steelstory.model.character.dto.UpdateCharacterDto;
 import pl.steelstory.model.character.dto.CharacterDto;
 import pl.steelstory.model.character.dto.CreateCharacterDto;
+import pl.steelstory.model.character.dto.UpdateCharacterDto;
+import pl.steelstory.service.CharacterService;
 
 import java.util.UUID;
 

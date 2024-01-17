@@ -48,11 +48,20 @@ public class CharacterEntity {
   @Column(name = "intelligence")
   private int intelligence;
 
+  @Column(name = "attack")
+  private int attack;
+
+  @Column(name = "defense")
+  private int defense;
+
+  @Column(name = "hp")
+  private int hp;
+
   @Column(name = "stamina")
   private int stamina;
 
   public CharacterDto toModel() {
-    return new CharacterDto(businessId, name, level, experience, characterClass, strength, dexterity, intelligence, stamina);
+    return new CharacterDto(businessId, name, level, experience, characterClass, strength, dexterity, intelligence, attack, defense, hp, stamina);
   }
 
   public static CharacterEntity create(CreateCharacterDto character) {
@@ -79,21 +88,33 @@ public class CharacterEntity {
         entity.intelligence = 12;
         entity.dexterity = 3;
         entity.strength = 3;
+        entity.attack = 10;
+        entity.defense = 3;
+        entity.hp = 80;
       }
       case ARCHER -> {
         entity.intelligence = 3;
         entity.dexterity = 12;
         entity.strength = 3;
+        entity.attack = 8;
+        entity.defense = 5;
+        entity.hp = 100;
       }
       case BERSERK -> {
         entity.intelligence = 3;
         entity.dexterity = 3;
         entity.strength = 12;
+        entity.attack = 12;
+        entity.defense = 6;
+        entity.hp = 135;
       }
       case PALADIN -> {
         entity.intelligence = 7;
         entity.strength = 7;
         entity.dexterity = 3;
+        entity.attack = 10;
+        entity.defense = 8;
+        entity.hp = 120;
       }
     }
   }

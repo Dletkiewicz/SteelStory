@@ -1,39 +1,14 @@
 package pl.steelstory.entity;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.NaturalId;
-import pl.steelstory.model.item.ItemRarity;
-import pl.steelstory.model.item.WeaponType;
-
-import java.util.UUID;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "weapons")
-public class WeaponEntity {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(name = "id")
-  private UUID databaseId;
-
-  @NaturalId
-  @Column(name = "business_id")
-  private UUID businessId;
-
-  @Column(name = "name")
-  private String name;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "type")
-  private WeaponType type;
+public class WeaponEntity extends ItemEntity {
 
   @Column(name = "attack")
   private int attack;
 
-  @Column(name = "required_level")
-  private int requiredLevel;
-
-  @Enumerated(EnumType.STRING)
-  @Column(name = "rarity")
-  private ItemRarity itemRarity;
 }
