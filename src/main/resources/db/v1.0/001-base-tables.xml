@@ -72,6 +72,9 @@
             <column name="rarity" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
+            <column name="type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 
@@ -79,9 +82,6 @@
         <createTable tableName="armors">
             <column name="id" type="uuid">
                 <constraints primaryKey="true" primaryKeyName="armors_pk"/>
-            </column>
-            <column name="type" type="varchar(20)">
-                <constraints nullable="false"/>
             </column>
             <column name="defense" type="integer">
                 <constraints nullable="false"/>
@@ -94,10 +94,27 @@
             <column name="id" type="uuid">
                 <constraints primaryKey="true" primaryKeyName="weapons_pk"/>
             </column>
-            <column name="type" type="varchar(20)">
+            <column name="attack" type="integer">
                 <constraints nullable="false"/>
             </column>
-            <column name="attack" type="integer">
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-table-equipped-items" author="dletkiewicz">
+        <createTable tableName="equipped_items">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" primaryKeyName="equipped_items_pk"/>
+            </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="equipped_items_business_id_un"/>
+            </column>
+            <column name="character_id" type="uuid">
+                <constraints referencedTableName="characters" referencedColumnNames="id" foreignKeyName="equipped_items_character_fk"/>
+            </column>
+            <column name="item_id" type="uuid">
+                <constraints referencedTableName="items" referencedColumnNames="id" foreignKeyName="equipped_items_item_fk"/>
+            </column>
+            <column name="item_type" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
         </createTable>

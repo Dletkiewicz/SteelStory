@@ -2,6 +2,7 @@ package pl.steelstory.entity;
 
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
+import pl.steelstory.model.item.ItemType;
 
 import java.util.UUID;
 
@@ -23,11 +24,11 @@ public class EquippedItemsEntity {
   private CharacterEntity character;
 
   @ManyToOne
-  @JoinColumn(name = "armor_id")
-  private ArmorEntity armor;
+  @JoinColumn(name = "item_id")
+  private ItemEntity item;
 
-  @ManyToOne
-  @JoinColumn(name = "weapon_id")
-  private WeaponEntity weapon;
+  @Enumerated(EnumType.STRING)
+  @Column(name = "item_type")
+  private ItemType type;
 
 }

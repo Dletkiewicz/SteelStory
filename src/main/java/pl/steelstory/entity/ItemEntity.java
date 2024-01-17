@@ -3,6 +3,7 @@ package pl.steelstory.entity;
 import jakarta.persistence.*;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.item.ItemRarity;
+import pl.steelstory.model.item.ItemType;
 
 import java.util.UUID;
 
@@ -29,5 +30,9 @@ public class ItemEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "rarity")
   private ItemRarity itemRarity;
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "type")
+  private ItemType type;
 
 }
