@@ -15,27 +15,27 @@ public class ItemEntity {
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   @Column(name = "id")
-  private UUID databaseId;
+  protected UUID databaseId;
 
   @NaturalId
   @Column(name = "business_id")
-  private UUID businessId;
+  protected UUID businessId;
 
   @Column(name = "name")
-  private String name;
+  protected String name;
 
   @Column(name = "required_level")
-  private int requiredLevel;
+  protected int requiredLevel;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "rarity")
-  private ItemRarity itemRarity;
+  protected ItemRarity itemRarity;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "type")
-  private ItemType type;
+  protected ItemType type;
 
   @Column(name = "weight")
-  private int weight;
+  protected int weight;
 
 }

@@ -7,17 +7,8 @@ import pl.steelstory.model.item.ItemType;
 import java.util.UUID;
 
 @Entity
-@Table(name = "equipped_item")
-public class EquippedItemsEntity {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(name = "id")
-  private UUID databaseId;
-
-  @NaturalId
-  @Column(name = "business_id")
-  private UUID businessId;
+@Table(name = "equipped_items")
+public class EquippedItemEntity extends ItemEntity {
 
   @ManyToOne
   @JoinColumn(name = "character_id")
@@ -27,8 +18,7 @@ public class EquippedItemsEntity {
   @JoinColumn(name = "item_id")
   private ItemEntity item;
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "item_type")
-  private ItemType type;
-
+//  EquippedItemDto toModel() {
+//    return new EquippedItemDto();
+//  }
 }
