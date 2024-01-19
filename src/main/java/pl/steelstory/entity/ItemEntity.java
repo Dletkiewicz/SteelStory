@@ -35,4 +35,7 @@ public class ItemEntity {
   @Column(name = "type")
   private ItemType type;
 
+  @Column(name = "weight")
+  private int weight;
+
 }
