@@ -1,10 +1,7 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
-import org.hibernate.annotations.NaturalId;
-import pl.steelstory.model.item.BackpackItemDto;
-
-import java.util.UUID;
+import pl.steelstory.model.item.dto.BackpackItemDto;
 
 @Entity
 @Table(name = "backpack_items")

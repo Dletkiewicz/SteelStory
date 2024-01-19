@@ -1,4 +1,7 @@
-package pl.steelstory.model.item;
+package pl.steelstory.model.item.dto;
+
+import pl.steelstory.model.item.ItemRarity;
+import pl.steelstory.model.item.ItemType;
 
 import java.util.UUID;
 

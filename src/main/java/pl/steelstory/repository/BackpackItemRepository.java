@@ -18,4 +18,5 @@ public interface BackpackItemRepository extends JpaRepository<BackpackItemEntity
   @EntityGraph(attributePaths = {"character"})
   Optional<BackpackItemEntity> findByBusinessIdAndCharacterBusinessId(UUID id, UUID characterId);
 
+  void deleteByBusinessId(UUID id);
 }

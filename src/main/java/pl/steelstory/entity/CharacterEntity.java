@@ -1,6 +1,7 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.character.CharacterClassType;
 import pl.steelstory.model.character.dto.CharacterDto;
@@ -18,6 +19,7 @@ public class CharacterEntity {
   @Column(name = "id")
   private UUID databaseId;
 
+  @Getter
   @NaturalId
   @Column(name = "business_id")
   private UUID businessId;

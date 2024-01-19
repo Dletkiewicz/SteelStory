@@ -1,10 +1,10 @@
 package pl.steelstory.entity;
 
-import jakarta.persistence.*;
-import org.hibernate.annotations.NaturalId;
-import pl.steelstory.model.item.ItemType;
-
-import java.util.UUID;
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
+import pl.steelstory.model.item.dto.EquippedItemDto;
 
 @Entity
 @Table(name = "equipped_items")
@@ -18,7 +18,7 @@ public class EquippedItemEntity extends ItemEntity {
   @JoinColumn(name = "item_id")
   private ItemEntity item;
 
-//  EquippedItemDto toModel() {
-//    return new EquippedItemDto();
-//  }
+  EquippedItemDto toModel() {
+    return new EquippedItemDto(businessId, name, type, itemRarity, requiredLevel, weight);
+  }
 }

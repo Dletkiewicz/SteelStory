@@ -1,6 +1,7 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.item.ItemRarity;
 import pl.steelstory.model.item.ItemType;
@@ -17,6 +18,7 @@ public class ItemEntity {
   @Column(name = "id")
   protected UUID databaseId;
 
+  @Getter
   @NaturalId
   @Column(name = "business_id")
   protected UUID businessId;

@@ -1,4 +1,4 @@
-package pl.steelstory.model.item;
+package pl.steelstory.model.item.dto;
 
 import java.util.UUID;
 
