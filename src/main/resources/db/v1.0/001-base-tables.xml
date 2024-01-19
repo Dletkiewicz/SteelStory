@@ -40,18 +40,36 @@
             <column name="name" type="varchar(15)">
                 <constraints nullable="false"/>
             </column>
-            <column name="level" type="integer"/>
-            <column name="experience" type="bigint"/>
+            <column name="level" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="experience" type="bigint">
+                <constraints nullable="false"/>
+            </column>
             <column name="class" type="varchar(20)">
                 <constraints nullable="false"/>
             </column>
-            <column name="strength" type="integer"/>
-            <column name="dexterity" type="integer"/>
-            <column name="intelligence" type="integer"/>
-            <column name="attack" type="integer"/>
-            <column name="defense" type="integer"/>
-            <column name="hp" type="integer"/>
-            <column name="stamina" type="integer"/>
+            <column name="strength" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="dexterity" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="intelligence" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attack" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="defense" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="hp" type="integer">
+                <constraints nullable="false"/>
+            </column>
+            <column name="stamina" type="integer">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 
@@ -73,6 +91,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="weight" type="integer">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -115,6 +136,26 @@
                 <constraints referencedTableName="items" referencedColumnNames="id" foreignKeyName="equipped_items_item_fk"/>
             </column>
             <column name="item_type" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-table-backpack-items" author="dletkiewicz">
+        <createTable tableName="backpack_items">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" primaryKeyName="backpack_items_pk"/>
+            </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="backpack_items_business_id_un"/>
+            </column>
+            <column name="character_id" type="uuid">
+                <constraints referencedTableName="characters" referencedColumnNames="id" foreignKeyName="backpack_items_character_fk"/>
+            </column>
+            <column name="item_id" type="uuid">
+                <constraints referencedTableName="items" referencedColumnNames="id" foreignKeyName="backpack_items_item_fk"/>
+            </column>
+            <column name="capacity" type="integer">
                 <constraints nullable="false"/>
             </column>
         </createTable>
