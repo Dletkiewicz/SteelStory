@@ -7,7 +7,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "backpack_items")
-public class BackpackEntity {
+public class BackpackItemEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
