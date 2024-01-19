@@ -35,7 +35,7 @@ public class ItemEntity {
   @Column(name = "type")
   private ItemType type;
 
-  @Column(name = "weigth")
-  private int weigth;
+  @Column(name = "weight")
+  private int weight;
 
 }
