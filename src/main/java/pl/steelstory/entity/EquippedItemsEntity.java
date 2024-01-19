@@ -7,7 +7,7 @@ import pl.steelstory.model.item.ItemType;
 import java.util.UUID;
 
 @Entity
-@Table(name = "equipped_items")
+@Table(name = "equipped_item")
 public class EquippedItemsEntity {
 
   @Id
