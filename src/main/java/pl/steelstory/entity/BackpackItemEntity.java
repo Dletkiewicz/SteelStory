@@ -8,15 +8,12 @@ import pl.steelstory.model.item.dto.BackpackItemDto;
 public class BackpackItemEntity extends ItemEntity {
 
   @ManyToOne
-  @JoinColumn(name = "character_id")
-  private CharacterEntity character;
+  @JoinColumn(name = "backpack_id")
+  private BackpackEntity backpack;
 
   @ManyToOne
   @JoinColumn(name = "item_id")
   private ItemEntity item;
-
-  @Column(name = "capacity")
-  private int capacity;
 
   public BackpackItemDto toModel() {
     return new BackpackItemDto(businessId, name, type, itemRarity, requiredLevel, weight);
