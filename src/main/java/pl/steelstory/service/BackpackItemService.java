@@ -23,13 +23,13 @@ public class BackpackItemService {
   public List<BackpackItemDto> list(ListBackpackItemsDto dto) {
     var character = characters.findByBusinessId(dto.characterId()).orElseThrow(() -> new CharacterNotFoundException(dto.characterId()));
 
-    return items.findAllByCharacterBusinessId(character.getBusinessId()).stream().map(BackpackItemEntity::toModel)
+    return items.findAllByBackpackBusinessId(character.getBusinessId()).stream().map(BackpackItemEntity::toModel)
         .toList();
   }
 
   public void delete(DeleteBackpackItemDto dto) {
     var character = characters.findByBusinessId(dto.characterId()).orElseThrow(() -> new CharacterNotFoundException(dto.characterId()));
-    var item = items.findByBusinessIdAndCharacterBusinessId(dto.id(), character.getBusinessId()).orElseThrow(() -> new BackpackItemNotFoundException(dto.id()));
+    var item = items.findByBusinessIdAndBackpackBusinessId(dto.id(), character.getBusinessId()).orElseThrow(() -> new BackpackItemNotFoundException(dto.id()));
 
     items.deleteByBusinessId(item.getBusinessId());
   }

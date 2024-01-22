@@ -13,10 +13,10 @@ import java.util.UUID;
 public interface BackpackItemRepository extends JpaRepository<BackpackItemEntity, UUID> {
 
   @EntityGraph(attributePaths = {"character"})
-  List<BackpackItemEntity> findAllByCharacterBusinessId(UUID characterId);
+  List<BackpackItemEntity> findAllByBackpackBusinessId(UUID backpackId);
 
   @EntityGraph(attributePaths = {"character"})
-  Optional<BackpackItemEntity> findByBusinessIdAndCharacterBusinessId(UUID id, UUID characterId);
+  Optional<BackpackItemEntity> findByBusinessIdAndBackpackBusinessId(UUID id, UUID backpackId);
 
   void deleteByBusinessId(UUID id);
 }
