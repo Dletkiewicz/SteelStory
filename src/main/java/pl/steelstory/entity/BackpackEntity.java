@@ -40,4 +40,13 @@ public class BackpackEntity {
         items != null ? items.stream().map(BackpackItemEntity::toModel).collect(Collectors.toList()) : Collections.emptyList(),
         capacity);
   }
+
+  public static BackpackEntity create(CharacterEntity character) {
+    var entity = new BackpackEntity();
+    entity.businessId = UUID.randomUUID();
+    entity.character = character;
+    entity.items = null;
+    entity.capacity = 100;
+    return entity;
+  }
 }

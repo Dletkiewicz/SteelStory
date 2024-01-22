@@ -2,12 +2,14 @@ package pl.steelstory.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import pl.steelstory.entity.BackpackEntity;
 import pl.steelstory.entity.CharacterEntity;
 import pl.steelstory.exception.character.CharacterNameTakenException;
 import pl.steelstory.exception.character.CharacterNotFoundException;
 import pl.steelstory.model.character.dto.CharacterDto;
 import pl.steelstory.model.character.dto.CreateCharacterDto;
 import pl.steelstory.model.character.dto.UpdateCharacterDto;
+import pl.steelstory.repository.BackpackRepository;
 import pl.steelstory.repository.CharacterRepository;
 
 import java.util.UUID;
@@ -17,6 +19,7 @@ import java.util.UUID;
 public class CharacterService {
 
   private final CharacterRepository characters;
+  private final BackpackRepository backpacks;
 
   public CharacterDto save(CreateCharacterDto character) {
     if (characters.existsByName(character.name())) {
@@ -24,7 +27,9 @@ public class CharacterService {
     }
 
     var entity = CharacterEntity.create(character);
+    var backpack = BackpackEntity.create(entity);
     characters.save(entity);
+    backpacks.save(backpack);
     return entity.toModel();
   }
 
