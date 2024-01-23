@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.steelstory.entity.BackpackEntity;
 import pl.steelstory.entity.CharacterEntity;
+import pl.steelstory.exception.character.BackpackNotFound;
 import pl.steelstory.exception.character.CharacterNameTakenException;
 import pl.steelstory.exception.character.CharacterNotFoundException;
+import pl.steelstory.model.character.dto.BackpackDto;
 import pl.steelstory.model.character.dto.CharacterDto;
 import pl.steelstory.model.character.dto.CreateCharacterDto;
 import pl.steelstory.model.character.dto.UpdateCharacterDto;
@@ -31,6 +33,12 @@ public class CharacterService {
     characters.save(entity);
     backpacks.save(backpack);
     return entity.toModel();
+  }
+
+  public BackpackDto getBackpack(UUID id) {
+    return backpacks.findByCharacterBusinessId(id)
+        .map(BackpackEntity::toModel)
+        .orElseThrow(() -> new CharacterNotFoundException(id));
   }
 
   public CharacterDto get(UUID id) {

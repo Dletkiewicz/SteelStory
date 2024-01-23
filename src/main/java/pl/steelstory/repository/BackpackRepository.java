@@ -10,5 +10,7 @@ import java.util.UUID;
 @Repository
 public interface BackpackRepository extends JpaRepository<BackpackEntity, UUID> {
 
+  Optional<BackpackEntity> findByCharacterBusinessId(UUID id);
+
   Optional<BackpackEntity> findByBusinessId(UUID id);
 }

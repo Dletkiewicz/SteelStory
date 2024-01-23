@@ -18,6 +18,7 @@ import pl.steelstory.repository.CharacterRepository;
 import pl.steelstory.repository.ItemRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,8 +29,8 @@ public class BackpackItemService {
   private final CharacterRepository characters;
   private final ItemRepository items;
 
-  public List<BackpackItemDto> list(ListBackpackItemsDto dto) {
-    var character = characters.findByBusinessId(dto.characterId()).orElseThrow(() -> new CharacterNotFoundException(dto.characterId()));
+  public List<BackpackItemDto> list(UUID id) {
+    var character = characters.findByBusinessId(id).orElseThrow(() -> new CharacterNotFoundException(id));
 
     return backpackItems.findAllByBackpackBusinessId(character.getBusinessId()).stream().map(BackpackItemEntity::toModel)
         .toList();
