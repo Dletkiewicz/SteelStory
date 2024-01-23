@@ -2,13 +2,13 @@ package pl.steelstory.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-import pl.steelstory.entity.BackpackEntity;
+import pl.steelstory.entity.ItemEntity;
 
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface BackpackRepository extends JpaRepository<BackpackEntity, UUID> {
+public interface ItemRepository extends JpaRepository<ItemEntity, UUID> {
 
-  Optional<BackpackEntity> findByBusinessId(UUID id);
+  Optional<ItemEntity> findByBusinessId(UUID id);
 }

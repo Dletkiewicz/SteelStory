@@ -19,4 +19,11 @@ public class BackpackItemEntity extends ItemEntity {
     return new BackpackItemDto(businessId, name, type, itemRarity, requiredLevel, weight);
   }
 
+  public static BackpackItemEntity create(BackpackEntity backpack, ItemEntity item) {
+    var entity = new BackpackItemEntity();
+    entity.backpack = backpack;
+    entity.item = item;
+    return entity;
+  }
+
 }

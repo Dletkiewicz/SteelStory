@@ -2,6 +2,7 @@ package pl.steelstory.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.character.dto.BackpackDto;
 
@@ -28,6 +29,8 @@ public class BackpackEntity {
   @JoinColumn(name = "character_id")
   private CharacterEntity character;
 
+  @Setter
+  @Getter
   @OneToMany(mappedBy = "backpack")
   private List<BackpackItemEntity> items;
 
@@ -48,5 +51,10 @@ public class BackpackEntity {
     entity.items = null;
     entity.capacity = 100;
     return entity;
+  }
+
+  public void addItem(BackpackEntity backpack, ItemEntity entity) {
+    var item = BackpackItemEntity.create(backpack, entity);
+    items.add(item);
   }
 }
