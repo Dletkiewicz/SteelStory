@@ -21,7 +21,6 @@ import java.util.UUID;
 public class CharacterItemsController {
 
   private final CharacterItemService items;
-  private final CharacterService characters;
 
   @GetMapping("/{characterId}/backpack")
   public BackpackDto getBackpackItems(@PathVariable UUID characterId) {
@@ -37,6 +36,16 @@ public class CharacterItemsController {
     try {
       var item = items.save(characterId, itemId);
       return ResponseEntity.created(ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{itemId}").build(item.id())).body(item);
+    } catch (CharacterNotFoundException | ItemNotFoundException e) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getLocalizedMessage(), e);
+    }
+  }
+
+  @DeleteMapping("/{characterId}/backpack/{itemId}")
+  public ResponseEntity<Void> deleteItem(@PathVariable UUID characterId, @PathVariable UUID itemId) {
+    try {
+      items.deleteBackpackItem(characterId, itemId);
+      return ResponseEntity.noContent().build();
     } catch (CharacterNotFoundException | ItemNotFoundException e) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, e.getLocalizedMessage(), e);
     }
