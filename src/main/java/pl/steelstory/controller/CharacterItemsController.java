@@ -11,7 +11,6 @@ import pl.steelstory.exception.item.ItemNotFoundException;
 import pl.steelstory.model.character.dto.BackpackDto;
 import pl.steelstory.model.item.dto.BackpackItemDto;
 import pl.steelstory.service.CharacterItemService;
-import pl.steelstory.service.CharacterService;
 
 import java.util.UUID;
 

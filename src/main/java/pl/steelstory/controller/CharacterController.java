@@ -32,9 +32,9 @@ public class CharacterController {
   }
 
   @PostMapping()
-  public ResponseEntity<CharacterDto> saveCharacter(@RequestBody CreateCharacterDto payload) {
+  public ResponseEntity<CharacterDto> saveCharacter(@RequestParam UUID userId, @RequestBody CreateCharacterDto payload) {
     try {
-      var character = characters.save(payload);
+      var character = characters.save(userId, payload);
       return ResponseEntity.created(
               ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{characterId}").build(character.businessId()))
           .body(character);

@@ -66,9 +66,10 @@ public class CharacterEntity {
     return new CharacterDto(businessId, name, level, experience, characterClass, strength, dexterity, intelligence, attack, defense, hp, stamina);
   }
 
-  public static CharacterEntity create(CreateCharacterDto character) {
+  public static CharacterEntity create(UserEntity user, CreateCharacterDto character) {
     var entity = new CharacterEntity();
     entity.businessId = UUID.randomUUID();
+    entity.user = user;
     entity.name = character.name();
     entity.level = 0;
     entity.experience = 0;

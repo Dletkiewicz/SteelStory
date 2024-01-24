@@ -13,6 +13,15 @@
     <property name="now" value="sysdate" dbms="oracle"/>
     <property name="now" value="getdate()" dbms="mssql"/>
 
+    <!-- uuid types and functions -->
+    <property name="uuid_type" value="uuid" dbms="postgresql"/>
+    <property name="uuid_type" value="uniqueidentifier" dbms="mssql"/>
+    <property name="uuid_type" value="RAW(16)" dbms="oracle"/>
+
+    <property name="uuid_function" value="gen_random_uuid()" dbms="postgresql"/>
+    <property name="uuid_function" value="NEWID()" dbms="mssql"/>
+    <property name="uuid_function" value="sys_guid()" dbms="oracle"/>
+
     <!-- Include Scripts -->
     <include file="v1.0/000-version.xml" relativeToChangelogFile="true"/>
 

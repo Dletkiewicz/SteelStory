@@ -5,6 +5,6 @@
 
     <!-- Include Scripts -->
     <include file="001-base-tables.xml" relativeToChangelogFile="true"/>
-<!--  //  <include file="002-items-data.xml" relativeToChangelogFile="true"/>-->
+    <include file="002-items-data.xml" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>

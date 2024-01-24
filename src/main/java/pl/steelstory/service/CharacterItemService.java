@@ -1,5 +1,6 @@
 package pl.steelstory.service;
 
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import pl.steelstory.entity.BackpackItemEntity;
@@ -31,6 +32,7 @@ public class CharacterItemService {
     return backpack.toModel();
   }
 
+  @Transactional
   public BackpackItemDto save(UUID characterId, UUID itemId) {
     var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId));
     var backpack = backpacks.getByCharacterBusinessId(character.getBusinessId());
@@ -39,6 +41,7 @@ public class CharacterItemService {
     return item.toModel();
   }
 
+  @Transactional
   public void deleteBackpackItem(UUID characterId, UUID itemId) {
     var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId));
     var item = backpackItems.findByBusinessIdAndBackpackBusinessId(itemId, character.getBusinessId()).orElseThrow(() -> new BackpackItemNotFoundException(itemId));
