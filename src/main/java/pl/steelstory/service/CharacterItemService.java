@@ -40,7 +40,7 @@ public class CharacterItemService {
   }
 
   public void deleteBackpackItem(UUID characterId, UUID itemId) {
-    var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId);
+    var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId));
     var item = backpackItems.findByBusinessIdAndBackpackBusinessId(itemId, character.getBusinessId()).orElseThrow(() -> new BackpackItemNotFoundException(itemId));
 
     backpackItems.deleteByBusinessId(item.getBusinessId());
