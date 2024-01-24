@@ -35,12 +35,6 @@ public class CharacterService {
     return entity.toModel();
   }
 
-  public BackpackDto getBackpack(UUID id) {
-    return backpacks.findByCharacterBusinessId(id)
-        .map(BackpackEntity::toModel)
-        .orElseThrow(() -> new CharacterNotFoundException(id));
-  }
-
   public CharacterDto get(UUID id) {
     return characters.findByBusinessId(id)
         .map(CharacterEntity::toModel)

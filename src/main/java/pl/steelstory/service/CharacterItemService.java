@@ -22,29 +22,29 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class BackpackItemService {
+public class CharacterItemService {
 
   private final BackpackItemRepository backpackItems;
   private final BackpackRepository backpacks;
   private final CharacterRepository characters;
   private final ItemRepository items;
 
-  public List<BackpackItemDto> list(UUID id) {
-    var character = characters.findByBusinessId(id).orElseThrow(() -> new CharacterNotFoundException(id));
+  public BackpackDto getBackpack(UUID characterId) {
+    var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId));
+    var backpack = backpacks.getByCharacterBusinessId(character.getBusinessId());
 
-    return backpackItems.findAllByBackpackBusinessId(character.getBusinessId()).stream().map(BackpackItemEntity::toModel)
-        .toList();
-  }
-
-  public BackpackDto save(CreateBackpackItemDto dto) {
-    var backpack = backpacks.findByBusinessId(dto.backpackId()).orElseThrow(() -> new BackpackNotFound(dto.backpackId()));
-    var item = items.findByBusinessId(dto.itemId()).orElseThrow(() -> new ItemNotFoundException(dto.itemId()));
-    backpack.addItem(backpack, item);
-    backpacks.save(backpack);
     return backpack.toModel();
   }
 
-  public void delete(DeleteBackpackItemDto dto) {
+  public BackpackItemDto save(UUID characterId, UUID itemId) {
+    var character = characters.findByBusinessId(characterId).orElseThrow(() -> new CharacterNotFoundException(characterId));
+    var backpack = backpacks.getByCharacterBusinessId(character.getBusinessId());
+    var item = BackpackItemEntity.create(backpack, items.findByBusinessId(itemId).orElseThrow(() -> new ItemNotFoundException(itemId)));
+    backpackItems.save(item);
+    return item.toModel();
+  }
+
+  public void deleteBackpackItem(DeleteBackpackItemDto dto) {
     var character = characters.findByBusinessId(dto.characterId()).orElseThrow(() -> new CharacterNotFoundException(dto.characterId()));
     var item = backpackItems.findByBusinessIdAndBackpackBusinessId(dto.id(), character.getBusinessId()).orElseThrow(() -> new BackpackItemNotFoundException(dto.id()));
 
