@@ -2,9 +2,12 @@ package pl.steelstory.model.item;
 
 public enum ItemRarity {
 
-  RARITY_GREY,
-  RARITY_GREEN,
-  RARITY_BLUE,
-  RARITY_MAGENTA,
-  RARITY_GOLD
+  RARITY_TRASH,
+  RARITY_COMMON,
+  RARITY_UNCOMMON,
+  RARITY_RARE,
+  RARITY_ELITE,
+  RARITY_EPIC,
+  RARITY_LEGENDARY
+
 }

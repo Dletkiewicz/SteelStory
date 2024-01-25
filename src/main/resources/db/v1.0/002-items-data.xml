@@ -4,99 +4,54 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
 
-    <changeSet id="insert-into-weapons" author="dletkiewicz">
-        <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="4705d784-d962-445b-8387-4791054fa6f0"/>
-            <column name="business_id" generationType="uuid" value="f9a15789-ec0a-4cbf-a333-817bf2291a4b"/>
+    <changeSet id="insert-example-weapon-1" author="dletkiewicz">
+        <insert tableName="items">
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" type="uuid" valueComputed="gen_random_uuid()"/>
             <column name="name" value="Miecz"/>
             <column name="type" value="WEAPON_MELEE"/>
-            <column name="attack" value="5"/>
             <column name="required_level" value="1"/>
-            <column name="rarity" value="RARITY_GREY"/>
+            <column name="rarity" value="RARITY_TRASH"/>
+            <column name="weight" value="3"/>
         </insert>
         <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="a607be89-0ea7-4584-9175-3bb39c0186f6"/>
-            <column name="business_id" generationType="uuid" value="98738daa-58e3-492a-a684-84ed67a61764"/>
-            <column name="name" value="Pałka"/>
-            <column name="type" value="WEAPON_MELEE"/>
-            <column name="attack" value="3"/>
-            <column name="required_level" value="0"/>
-            <column name="rarity" value="RARITY_GREY"/>
-        </insert>
-        <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="e230f1c8-1970-45b6-90d7-9243b55df093"/>
-            <column name="business_id" generationType="uuid" value="f760bda2-d0ea-4f19-98a8-3dc69b90607d"/>
-            <column name="name" value="Łuk"/>
-            <column name="type" value="WEAPON_RANGED"/>
+            <column name="id" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" valueComputed="gen_random_uuid()"/>
             <column name="attack" value="5"/>
-            <column name="required_level" value="1"/>
-            <column name="rarity" value="RARITY_GREY"/>
-        </insert>
-        <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="4405d784-d962-445b-8387-4791054fa6f0"/>
-            <column name="business_id" generationType="uuid" value="60b1cc6c-2096-4237-95ac-db7ac7ec76e8"/>
-            <column name="name" value="DŁUGI MIECZ"/>
-            <column name="type" value="WEAPON_MELEE"/>
-            <column name="attack" value="12"/>
-            <column name="required_level" value="2"/>
-            <column name="rarity" value="RARITY_GREEN"/>
-        </insert>
-        <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="4705d384-d962-445b-8387-4791054fa6f0"/>
-            <column name="business_id" generationType="uuid" value="60b2cc6c-2096-4237-95ac-db7ac7ec26e8"/>
-            <column name="name" value="Magiczna flet"/>
-            <column name="type" value="WEAPON_MAGIC"/>
-            <column name="attack" value="15"/>
-            <column name="required_level" value="5"/>
-            <column name="rarity" value="RARITY_BLUE"/>
-        </insert>
-        <insert tableName="weapons">
-            <column name="id" generationType="uuid" value="4705d783-d962-445b-8387-4791054fa6f0"/>
-            <column name="business_id" generationType="uuid" value="60b3cc3c-2096-4237-95ac-db7ac7ec76e8"/>
-            <column name="name" value="KODEKS KARNY"/>
-            <column name="type" value="WEAPON_MAGIC"/>
-            <column name="attack" value="999"/>
-            <column name="required_level" value="67"/>
-            <column name="rarity" value="RARITY_MAGENTA"/>
         </insert>
     </changeSet>
 
-    <changeSet id="insert-into-armors" author="dletkiewicz">
-        <insert tableName="armors">
-            <column name="id" generationType="uuid" value="a605be89-0ea7-4584-9175-3bb39c0186f6"/>
-            <column name="business_id" generationType="uuid" value="a604be89-0ea7-4584-9175-3bb39c0186f6"/>
+    <changeSet id="insert-example-weapon-2" author="dletkiewicz">
+        <insert tableName="items">
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="name" value="Pałka"/>
+            <column name="type" value="WEAPON_MELEE"/>
+            <column name="required_level" value="1"/>
+            <column name="rarity" value="RARITY_TRASH"/>
+            <column name="weight" value="3"/>
+        </insert>
+        <insert tableName="weapons">
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="attack" value="5"/>
+        </insert>
+    </changeSet>
+
+    <changeSet id="insert-example-armor-1" author="dletkiewicz">
+        <insert tableName="items">
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" type="uuid" valueComputed="gen_random_uuid()"/>
             <column name="name" value="Czapka wpierdolka"/>
             <column name="type" value="ARMOR_HELMET"/>
-            <column name="defense" value="12"/>
             <column name="required_level" value="5"/>
-            <column name="rarity" value="RARITY_BLUE"/>
+            <column name="rarity" value="RARITY_TRASH"/>
+            <column name="weight" value="2"/>
         </insert>
         <insert tableName="armors">
-            <column name="id" generationType="uuid" value="a607be89-0ea6-4584-9175-3bb39c0186f6"/>
-            <column name="business_id" generationType="uuid" value="a607be86-0ea7-4584-9175-3bb39c0186f6"/>
-            <column name="name" value="Dres adidasa"/>
-            <column name="type" value="ARMOR_BODY"/>
-            <column name="defense" value="2"/>
-            <column name="required_level" value="1"/>
-            <column name="rarity" value="RARITY_GREEN"/>
-        </insert>
-        <insert tableName="armors">
-            <column name="id" generationType="uuid" value="a607be89-0ea7-4586-9175-3bb39c0186f6"/>
-            <column name="business_id" generationType="uuid" value="a607be89-0ea6-4584-9175-3bb39c0186f6"/>
-            <column name="name" value="Łuk"/>
-            <column name="type" value="ARMOR_GAUNTLET"/>
+            <column name="id" type="uuid" valueComputed="gen_random_uuid()"/>
+            <column name="business_id" type="uuid" valueComputed="gen_random_uuid()"/>
             <column name="defense" value="5"/>
-            <column name="required_level" value="1"/>
-            <column name="rarity" value="RARITY_GREY"/>
-        </insert>
-        <insert tableName="armors">
-            <column name="id" generationType="uuid" value="a607be89-0ea7-4584-9176-3bb39c0186f6"/>
-            <column name="business_id" generationType="uuid" value="a607be89-0ea7-4584-9165-3bb39c0186f6"/>
-            <column name="name" value="TARCZA SZMATO"/>
-            <column name="type" value="ARMOR_SHIELD"/>
-            <column name="defense" value="22"/>
-            <column name="required_level" value="15"/>
-            <column name="rarity" value="RARITY_BLUE"/>
         </insert>
     </changeSet>
 

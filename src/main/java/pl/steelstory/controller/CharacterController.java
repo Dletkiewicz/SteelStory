@@ -16,13 +16,13 @@ import pl.steelstory.service.CharacterService;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/v1")
+@RequestMapping("/api/v1/characters")
 @RequiredArgsConstructor
 public class CharacterController {
 
   private final CharacterService characters;
 
-  @GetMapping("/characters/{characterId}")
+  @GetMapping("/{characterId}")
   public CharacterDto getCharacter(@PathVariable UUID characterId) {
     try {
       return characters.get(characterId);
@@ -31,10 +31,10 @@ public class CharacterController {
     }
   }
 
-  @PostMapping("/characters")
-  public ResponseEntity<CharacterDto> saveCharacter(@RequestBody CreateCharacterDto payload) {
+  @PostMapping()
+  public ResponseEntity<CharacterDto> saveCharacter(@RequestParam UUID userId, @RequestBody CreateCharacterDto payload) {
     try {
-      var character = characters.save(payload);
+      var character = characters.save(userId, payload);
       return ResponseEntity.created(
               ServletUriComponentsBuilder.fromCurrentRequestUri().path("/{characterId}").build(character.businessId()))
           .body(character);
@@ -43,7 +43,7 @@ public class CharacterController {
     }
   }
 
-  @PutMapping("/characters/{characterId}")
+  @PutMapping("/{characterId}")
   public ResponseEntity<CharacterDto> updateCharacter(@PathVariable UUID characterId,
       @RequestBody UpdateCharacterDto payload) {
     try {
@@ -54,7 +54,7 @@ public class CharacterController {
     }
   }
 
-  @DeleteMapping("/characters/{characterId}")
+  @DeleteMapping("/{characterId}")
   public ResponseEntity<Void> deleteCharacter(@PathVariable UUID characterId) {
     try {
       characters.delete(characterId);

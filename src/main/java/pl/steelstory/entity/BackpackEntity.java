@@ -1,12 +1,18 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.NaturalId;
+import pl.steelstory.model.character.dto.BackpackDto;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "backpack_items")
+@Table(name = "backpacks")
 public class BackpackEntity {
 
   @Id
@@ -14,6 +20,7 @@ public class BackpackEntity {
   @Column(name = "id")
   private UUID databaseId;
 
+  @Getter
   @NaturalId
   @Column(name = "business_id")
   private UUID businessId;
@@ -22,11 +29,32 @@ public class BackpackEntity {
   @JoinColumn(name = "character_id")
   private CharacterEntity character;
 
-  @ManyToOne
-  @JoinColumn(name = "item_id")
-  private ItemEntity item;
+  @Setter
+  @Getter
+  @OneToMany(mappedBy = "backpack")
+  private List<BackpackItemEntity> items;
 
   @Column(name = "capacity")
   private int capacity;
 
+  public BackpackDto toModel() {
+    return new BackpackDto(businessId,
+        character.getBusinessId(),
+        items != null ? items.stream().map(BackpackItemEntity::toModel).collect(Collectors.toList()) : Collections.emptyList(),
+        capacity);
+  }
+
+  public static BackpackEntity create(CharacterEntity character) {
+    var entity = new BackpackEntity();
+    entity.businessId = UUID.randomUUID();
+    entity.character = character;
+    entity.items = null;
+    entity.capacity = 100;
+    return entity;
+  }
+
+  public void addItem(BackpackEntity backpack, ItemEntity entity) {
+    var item = BackpackItemEntity.create(backpack, entity);
+    items.add(item);
+  }
 }

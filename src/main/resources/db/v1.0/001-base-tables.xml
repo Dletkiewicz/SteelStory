@@ -104,6 +104,9 @@
             <column name="id" type="uuid">
                 <constraints primaryKey="true" primaryKeyName="armors_pk"/>
             </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="armors_business_id_un"/>
+            </column>
             <column name="defense" type="integer">
                 <constraints nullable="false"/>
             </column>
@@ -114,6 +117,9 @@
         <createTable tableName="weapons">
             <column name="id" type="uuid">
                 <constraints primaryKey="true" primaryKeyName="weapons_pk"/>
+            </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="weapons_business_id_un"/>
             </column>
             <column name="attack" type="integer">
                 <constraints nullable="false"/>
@@ -141,6 +147,23 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="create-table-backpacks" author="dletkiewicz">
+        <createTable tableName="backpacks">
+            <column name="id" type="uuid">
+                <constraints primaryKey="true" primaryKeyName="backpacks_pk"/>
+            </column>
+            <column name="business_id" type="uuid">
+                <constraints nullable="false" unique="true" uniqueConstraintName="backpacks_business_id_un"/>
+            </column>
+            <column name="character_id" type="uuid">
+                <constraints referencedTableName="characters" referencedColumnNames="id" foreignKeyName="backpacks_character_fk"/>
+            </column>
+            <column name="capacity" type="integer">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
     <changeSet id="create-table-backpack-items" author="dletkiewicz">
         <createTable tableName="backpack_items">
             <column name="id" type="uuid">
@@ -149,14 +172,11 @@
             <column name="business_id" type="uuid">
                 <constraints nullable="false" unique="true" uniqueConstraintName="backpack_items_business_id_un"/>
             </column>
-            <column name="character_id" type="uuid">
-                <constraints referencedTableName="characters" referencedColumnNames="id" foreignKeyName="backpack_items_character_fk"/>
+            <column name="backpack_id" type="uuid">
+                <constraints referencedTableName="backpacks" referencedColumnNames="id" foreignKeyName="backpack_items_backpack_fk"/>
             </column>
             <column name="item_id" type="uuid">
                 <constraints referencedTableName="items" referencedColumnNames="id" foreignKeyName="backpack_items_item_fk"/>
-            </column>
-            <column name="capacity" type="integer">
-                <constraints nullable="false"/>
             </column>
         </createTable>
     </changeSet>

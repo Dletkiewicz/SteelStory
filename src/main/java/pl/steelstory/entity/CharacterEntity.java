@@ -1,6 +1,7 @@
 package pl.steelstory.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
 import org.hibernate.annotations.NaturalId;
 import pl.steelstory.model.character.CharacterClassType;
 import pl.steelstory.model.character.dto.CharacterDto;
@@ -18,6 +19,7 @@ public class CharacterEntity {
   @Column(name = "id")
   private UUID databaseId;
 
+  @Getter
   @NaturalId
   @Column(name = "business_id")
   private UUID businessId;
@@ -64,9 +66,10 @@ public class CharacterEntity {
     return new CharacterDto(businessId, name, level, experience, characterClass, strength, dexterity, intelligence, attack, defense, hp, stamina);
   }
 
-  public static CharacterEntity create(CreateCharacterDto character) {
+  public static CharacterEntity create(UserEntity user, CreateCharacterDto character) {
     var entity = new CharacterEntity();
     entity.businessId = UUID.randomUUID();
+    entity.user = user;
     entity.name = character.name();
     entity.level = 0;
     entity.experience = 0;
