@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Architecture APPROVED; Milestone 2B.2 character creation backend authorized. Later gameplay and frontend work remain outside scope.
+Status: Architecture APPROVED; Milestone 2B.2 character creation backend complete. Milestone 2B.3 authorizes the authentication and character frontend. Later gameplay remains outside scope.
 
 ## Work in small domain slices
 
@@ -165,6 +165,10 @@ Avoid trivial tests that repeat implementation details or assert only getters/se
 
 Organize React features around player tasks, with a small shared UI layer and a central typed API adapter. Use strict TypeScript, explicit loading/error/conflict states, accessible controls and stable server contracts. Do not mirror backend business authority in a second frontend rules engine.
 
+The implemented frontend uses `src/api` for handwritten contracts, fetch/CSRF handling and safe Polish errors; `src/auth` for session state and forms; `src/characters` for selection, creation and profiles; and `src/ui` for the shared frame, feedback and original SVG emblems. `App.tsx` composes these features. Hash routes preserve profile navigation without a router dependency or backend session field. Fetch uses relative `/api/v1` URLs through the existing Vite proxy. Cookies remain browser-managed; CSRF is memory-only and refreshed after login. No POST is automatically replayed. A lost creation response requires checking the authoritative list before another attempt. Use only safe mapped errors in UI, never raw server details.
+
+Frontend tests use Node 24's built-in TypeScript stripping/test runner for pure rules and client lifecycle, and pinned Playwright for browser behavior. Run `npm test`, `npm run test:ui` and `npm run test:e2e` as described in the [2B.3 guide](milestones/2b3-character-frontend.md). UI failure fixtures are confined to tests; the production bundle always uses real API calls. Browser integration tests require a running backend and PostgreSQL and deliberately retain synthetic records. CI runs unit and fixture-based UI tests; the real-stack browser flow is locally verified. Never capture authentication traces with real users.
+
 Keep money/large counters as decimal strings at the JSON boundary. Show server-provided outcomes and deadlines; client countdowns are estimates. For retried commands preserve the original idempotency key and payload. On conflict, refresh authoritative state rather than silently replaying with a new key. Never optimistically display a premium purchase or irreversible inventory transfer as completed before server confirmation.
 
 Keep authentication cookies out of JavaScript, send CSRF tokens correctly, and treat all frontend configuration as public. Do not render untrusted HTML. Start with ordinary requests and polling; add transport/state libraries when they solve an existing problem.
@@ -197,7 +201,7 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2B.2 creation/list/get; later features require separate authorization.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2B.3 authentication and character UI; later gameplay features require separate authorization.
 
 ## Identity security conventions
 

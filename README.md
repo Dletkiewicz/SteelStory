@@ -1,6 +1,6 @@
 # Steelstory
 
-Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Milestone 2B.2 adds character creation and own-character reads. Further gameplay and frontend authentication/character screens remain deferred.
+Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Milestone 2B.2 adds character creation and own-character reads. Milestone 2B.3 provides a Polish, classic fantasy browser frontend with registration, login, three character slots, creation and character profiles. Further gameplay remains deferred.
 
 ## Prerequisites
 
@@ -50,7 +50,9 @@ npm ci
 npm run dev
 ```
 
-Open [the frontend](http://127.0.0.1:5173). It displays the backend connection result and offers a retry button. Vite proxies `/api` to port 8080; production hosting must provide equivalent same-origin routing. `vite preview` serves the built bundle but does not provide the development API proxy.
+Open [the frontend](http://127.0.0.1:5173). Register, then log in separately to create and select your characters. The frontend manages cookies and CSRF automatically; no manual tokens are needed. Vite proxies `/api` to `http://127.0.0.1:8080`, retaining the host-only SESSION cookie on the browser's origin. Always use `127.0.0.1:5173` consistently. Profiles use `#/characters/{id}` so refresh preserves navigation. The server connection check remains available in the shared frame. Production hosting must provide equivalent same-origin routing; production deployment is not implemented. Use `npm run dev` for the integrated local experience; `vite preview` is only a build preview, not the documented API environment.
+
+See [the frontend delivery and test guide](docs/milestones/2b3-character-frontend.md) for manual acceptance steps, architecture, failure handling and browser tests.
 
 If port 5432 is occupied, set `POSTGRES_PORT=55432` for Compose and `DB_URL=jdbc:postgresql://localhost:55432/steelstory` for the backend. This was the configuration used during local verification. In PowerShell:
 
@@ -87,7 +89,7 @@ SESSION/CSRF flow, and enforces three characters per account plus globally uniqu
 Flyway V0005 adds character-owned tables and the transactional account guard; prior migrations remain unchanged.
 See the [character backend report](docs/milestones/2b2-character-backend.md) for JSON examples and concurrency details.
 
-Use the same Compose, backend `local` profile and Vite commands above. Existing VS Code launch settings and DBeaver connection details still apply. No React login/registration screens are included in 2A. In DBeaver, accounts are in `steelstory.identity_accounts`; session tables are framework-owned and must not be edited by application modules.
+Use the same Compose, backend `local` profile and Vite commands above. Existing VS Code launch settings and DBeaver connection details still apply. Milestone 2B.3 now provides React login/registration screens. The following manual API instructions are optional for developers using Postman; players use the browser UI. In DBeaver, accounts are in `steelstory.identity_accounts`; session tables are framework-owned and must not be edited by application modules.
 
 Use one host consistently (`localhost` or `127.0.0.1`) so the cookie jar can retain the session. Postman's cookie jar must be enabled; no Authorization header is needed.
 
@@ -132,18 +134,21 @@ From `frontend/`:
 npm ci
 npm run typecheck
 npm run lint
+npm test
+npx playwright install chromium
+npm run test:ui
 npm run build
 ```
 
 Oxlint 1.93.0 supplies linting while preserving TypeScript 7 compatibility. Build output is `frontend/dist/`. The backend JAR is `backend/target/steelstory-0.1.0-SNAPSHOT.jar`; it can be run with `java -jar ... --spring.profiles.active=local` from the repository root using that path.
 
-GitHub Actions runs backend verification on a Docker-capable Linux runner and frontend installation/typecheck/lint/build. Actions are pinned to commit SHAs. There is no deployment job.
+`npm run test:e2e` additionally runs the actual browser acceptance flow with Spring Boot and PostgreSQL already running. On Windows, `$env:PLAYWRIGHT_CHANNEL = 'msedge'` uses installed Edge instead of downloading Chromium. Tests create synthetic local accounts and characters and retain them because deletion is outside scope. GitHub Actions runs backend verification on a Docker-capable Linux runner and frontend installation/typecheck/lint/unit tests/UI tests/build. Actions are pinned to commit SHAs. The real-stack browser test is currently local, and there is no deployment job.
 
 ## Verification and limitations
 
 Executed successfully: Maven Wrapper build/tests, frontend clean installation/typecheck/lint/build, Compose PostgreSQL startup, packaged backend startup, OpenAPI export, and a headless Edge browser check of connected/error/retry states through Vite. A temporary row and the single Flyway history entry survived backend restart plus PostgreSQL restart/container recreation; the probe table was removed afterward.
 
-The paragraph above records Milestone 1 smoke checks. Milestone 2A verification and exact commands are recorded in the [implementation report](docs/milestones/2a-identity.md). Hosted GitHub Actions has not run. Browser verification tooling was temporary and is not a project dependency. Character creation is implemented in Milestone 2B.2; further gameplay, payment integration, final game UI and deployment remain deferred. See the [character backend report](docs/milestones/2b2-character-backend.md).
+The paragraph above records Milestone 1 smoke checks. Milestone 2A verification and exact commands are recorded in the [implementation report](docs/milestones/2a-identity.md). Hosted GitHub Actions has not run. Milestone 2B.3 adds pinned Playwright development tooling and verifies the real registration/login/character flow in Edge, alongside responsive and failure-state tests. See the [frontend report](docs/milestones/2b3-character-frontend.md) and [character backend report](docs/milestones/2b2-character-backend.md). Further gameplay, payment integration and deployment remain deferred.
 
 ## Architecture documents
 

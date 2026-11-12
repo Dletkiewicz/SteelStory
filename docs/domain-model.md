@@ -51,6 +51,8 @@ IDs are opaque and immutable, preferably UUIDs generated without central allocat
 
 ## Character and progression
 
+Milestone 2B.3 adds presentation of the implemented creation rules in the browser: three slots, class selection, base 5 plus ten allocated bonuses, and a read-only character sheet. The sheet displays `startingAttributes + trainedAttributes` as permanent totals. It introduces no new domain rules, class bonuses, progression formulas or equipment values. All ownership and mutation decisions remain authoritative in the backend.
+
 Milestone 2B.2 implements immutable PlayerCharacter, CharacterId, CharacterName, CharacterClass, StartingAllocation and CharacterAttributes. Names are ASCII 3?20 with single internal spaces and global case-insensitive uniqueness. Exactly ten nonnegative allocation points produce base-5 starting attributes; trained bonuses are persisted separately at zero. Creation sets level 1, experience 0 and unspent training points 0. No progression, training, respec or deletion operations exist. See [implementation report](milestones/2b2-character-backend.md).
 
 A character belongs to exactly one account, and an account may own multiple characters. The model must not enforce permanent uniqueness of the character's account reference. Initial total/active character limits are product policy, not cardinality. The approved creation cap is three. Creation locks a character-owned account guard and counts/inserts in one transaction; active-account eligibility uses `identity::api`. Identity never queries character tables. Character selection is request/UI context; every acting character must be reauthorized against the authenticated account. A single selected-character field does not define account ownership.

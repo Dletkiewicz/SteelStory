@@ -2,7 +2,7 @@
 
 ## Current phase and scope
 
-The Steelstory architecture is APPROVED. Foundation and Identity are complete. Milestone 2B.2 explicitly authorizes the character creation backend: domain, application services, JDBC persistence, migration V0005, authenticated REST endpoints, OpenAPI and tests. Stop after creation/list/get. No frontend, progression, training, economy, equipment, combat, deletion or respec implementation is authorized. Do not commit or push.
+The Steelstory architecture is APPROVED. Foundation, Identity and Milestone 2B.2 character creation/list/get are complete. Milestone 2B.3 explicitly authorizes the Polish browser frontend: authentication, automatic session/CSRF handling, three character slots, creation, profiles, responsive classic fantasy styling and tests. Keep the existing backend contract. No progression, training, economy, equipment, combat, deletion or respec implementation is authorized. Do not commit or push.
 
 Read [README](README.md), [architecture](docs/architecture.md), [domain model](docs/domain-model.md), [development guidelines](docs/development-guidelines.md), and relevant [ADRs](docs/adr/0001-modular-monolith.md) before implementation. Treat proposed game rules as proposals; do not silently convert unresolved choices into requirements.
 
@@ -70,4 +70,4 @@ Milestone 2A's Java quality gate is authorized before any 2B work. Preserve auth
 
 Update architecture, domain/API documentation, development instructions and README when behavior or conventions change. Add/update the appropriate ADR for consequential decisions and explain changes to module dependencies. Separate verified facts, proposed defaults and unresolved questions.
 
-Before finishing, report changed files, resolved versions, commands executed, test results, known limitations and local run instructions. Run `backend/mvnw verify` (from backend; Docker required) and frontend `npm ci`, `npm run typecheck`, `npm run lint`, `npm run build` using the pinned Node toolchain. Never skip integration tests because Docker is unavailable; report the blocker. Respect the Milestone 2B.2 stop.
+Before finishing, report changed files, resolved versions, commands executed, test results, known limitations and local run instructions. Run `backend/mvnw verify` (from backend; Docker required) and frontend `npm ci`, `npm run typecheck`, `npm run lint`, `npm test`, `npm run test:ui`, `npm run build` using the pinned Node toolchain. Run `npm run test:e2e` against the local backend for authentication/character flow changes. Never skip integration tests because Docker is unavailable; report the blocker. Stop at the Milestone 2B.3 authentication and character frontend.
