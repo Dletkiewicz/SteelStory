@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -15,6 +16,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.json.JsonMapper;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -42,15 +44,23 @@ class FoundationIT {
     @Test
     void contextStartsAgainstPostgresAndMigrationsAreRepeatable() {
         assertThat(jdbc.queryForObject("select count(*) from information_schema.schemata where schema_name = 'steelstory'", Integer.class)).isEqualTo(1);
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0001");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0004");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(1);
+        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(4);
+    }
+
+    @Test
+    void defaultSessionCookieRequiresHttps() {
+        ResponseEntity<String> response = RestClient.create("http://localhost:" + port).get().uri("/api/v1/auth/csrf")
+                .retrieve().toEntity(String.class);
+        assertThat(response.getHeaders().get("Set-Cookie").toString())
+                .contains("Secure", "HttpOnly", "SameSite=Lax", "Path=/");
     }
 
     @Test
     void servesStatusHealthAndOpenApiContract() throws Exception {
-        var client = RestClient.create("http://localhost:" + port);
+        RestClient client = RestClient.create("http://localhost:" + port);
         assertThat(client.get().uri("/api/v1/status").retrieve().body(String.class))
                 .contains("steelstory", "UP");
         assertThat(client.get().uri("/actuator/health").retrieve().body(String.class)).contains("UP");
@@ -58,7 +68,7 @@ class FoundationIT {
         assertThat(contract).contains("/api/v1/status", "getStatus", "StatusResponse").doesNotContain("/actuator/");
         Files.createDirectories(Path.of("target"));
         Files.writeString(Path.of("target/openapi.json"), contract);
-        var mapper = tools.jackson.databind.json.JsonMapper.builder().build();
+        JsonMapper mapper = JsonMapper.builder().build();
         assertThat(mapper.readTree(contract)).isEqualTo(
                 mapper.readTree(Files.readString(Path.of("../docs/api/openapi.json"))));
     }

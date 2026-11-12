@@ -1,6 +1,14 @@
 # Steelstory domain model
 
-Status: **Architecture APPROVED; conceptual domain model**, 2026-11-11. Milestone 1 implements technical foundation only; none of these gameplay aggregates is implemented. Approved requirements are listed explicitly; aggregate details and marked business proposals remain subject to review. This is not a database schema or approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
+Status: **Architecture APPROVED**, updated 2026-11-12. Milestone 2A implements the initial Account model below. The gameplay model remains conceptual; no gameplay aggregates are implemented. Approved requirements are listed explicitly; marked business proposals remain subject to review. This is not an approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
+
+## Implemented Account model (Milestone 2A)
+
+Identity owns an immutable Account with UUID AccountId, canonical EmailAddress, redacted Argon2id PasswordHash, ACTIVE/DISABLED status and UTC createdAt/updatedAt. Registration creates ACTIVE accounts, with equal creation/update instants; reconstitution rejects an update before creation. There are no arbitrary setters, roles, wallets or character references. DISABLED accounts cannot authenticate or continue using protected APIs.
+
+Email normalization strips surrounding whitespace and lowercases with Locale.ROOT, preserving dots and plus tags. The supported subset is ASCII with a dotted domain, local part up to 64 characters and total canonical length up to 254. PostgreSQL enforces canonical uniqueness; V0004 adds single-separator, local-part and DNS-label invariants. New passwords contain 15–128 Unicode code points; login accepts 1–128 independently of the new-password minimum. Neither path trims or normalizes passwords; malformed Unicode is rejected. Registration hashes outside its short insertion transaction.
+
+The named API exports AccountId and a current isActive lookup (false for missing/disabled accounts), not credentials or aggregates. This lookup is not a transaction guard or an ownership authorization. A future concurrent character-creation cap will need an explicitly designed guard API; none is scaffolded now. Email verification/change, password reset, account deletion and administrative lifecycle operations are future requirements. See [ADR 0003](adr/0003-identity-sessions-and-security.md).
 
 ## Established game requirements
 

@@ -17,7 +17,8 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> unexpected(Exception exception, WebRequest request) {
-        LOG.error("Unhandled API failure", exception);
+        // JDBC/parser exception messages can include credentials or a rejected row.
+        LOG.error("Unhandled API failure ({})", exception.getClass().getSimpleName());
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR,
                 "An unexpected error occurred.");
         problem.setType(URI.create("urn:steelstory:problem:internal-error"));

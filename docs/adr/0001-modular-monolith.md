@@ -14,6 +14,8 @@ Build one Spring Boot backend artifact and one PostgreSQL database. Organize bac
 
 Introduce modules incrementally as authorized features need them. The planned module map is a boundary design, not a request to scaffold twelve modules or their tables at once. Milestone 1 is explicitly authorized and implements technical bootstrap/web adapters only, with zero gameplay modules. Later milestones are not authorized by this task.
 
+2026-11-12 scope amendment: the user separately authorized Milestone 2A Identity. It introduces only identity with an empty allowed-dependency list and its named api. The earlier paragraph records Foundation's original authorization; current authorization stops at 2A. No planned gameplay edges or pending business proposals are activated.
+
 Each module exposes a small named API and owns its tables. Other modules use immutable API values and identifiers, never internal classes, repositories, or persistence entities. Prefer direct synchronous calls. A workflow's application service owns its database transaction and can call several module APIs within that transaction. Each participant validates its own invariants.
 
 Use events only for a demonstrated requirement for independent, eventually consistent reactions. Financial settlement, ownership transfer, and reward delivery stay synchronous and atomic. If reliable asynchronous reactions are added, persist their publications with the originating transaction and make consumers idempotent.

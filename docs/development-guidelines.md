@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Architecture APPROVED; Milestone 1: Foundation authorized, 2026-11-11. These conventions govern implementation. Marked business proposals remain pending; authentication and gameplay are outside this milestone.
+Status: Architecture APPROVED; Milestone 2A: Identity authorized, 2026-11-12. These conventions govern implementation. Marked business proposals remain pending; characters, gameplay and frontend authentication screens are outside this milestone.
 
 ## Work in small domain slices
 
@@ -58,6 +58,35 @@ Choose names that explain purpose, such as `StatusResponse`, `ExpeditionService`
 
 Prefer straightforward conditionals and loops when they are easier to debug than chained streams. Use Optional for a meaningful absence contract, not as a replacement for every conditional. Introduce generics or design patterns only for an actual reusable relationship. Modern syntax is useful when the result is clearer, not merely shorter.
 
+The 2A quality gate makes the following rules mandatory for Java production code and tests:
+
+- Declare explicit local types; do not use `var` or raw types. Avoid a manual Optional presence check followed by `get()` when `orElseThrow` gives a clearer path. Do not add wrappers or generics without a concrete purpose.
+- Name dependencies after their type/responsibility: `accountRepository`, `passwordHashing`, `transactionTemplate`, `securityContextRepository`, and `accountAuthenticationProvider` when disambiguation is needed. Short names such as `accounts`, `passwords`, `transactions` and `contexts` hide that responsibility. Business method names should state intent.
+- Use four-space indentation, lines at most 120 characters in gated code, multiline long constructors/calls and a blank line between logical stages. After if/else or loop blocks, separate a distinct next stage (especially a return) with a blank line.
+- Use explicit imports sorted lexicographically, followed by a blank line and sorted static imports. Import annotation types even in `package-info.java`; Java places those imports after the annotated package declaration.
+- Use descriptive custom exception names ending in `Exception`, unless a documented alternative is justified. Keep shared stable messages/codes with their owner; reuse the exception's safe message constant at transport adapters where appropriate. Do not turn every string into a constant or introduce a global Errors/Constants bag.
+
+For example, package annotations use normal imports:
+
+```java
+@NamedInterface("api")
+package com.steelstory.identity.api;
+
+import org.springframework.modulith.NamedInterface;
+```
+
+### Selective Lombok policy
+
+Lombok is permitted when it removes meaningful repetitive work, not merely a few lines of correct constructors. Before adopting it, verify the chosen version with Java 25 and Maven, configure annotation processing explicitly, and run the build/tests. `@RequiredArgsConstructor` may replace a constructor that only assigns required final dependencies; `@Slf4j` may provide a logger in a class that logs. Keep constructors with validation or collaborator initialization explicit. Do not use `@Data`, generated domain setters or speculative `@Builder`; never replace behavior with generated accessors. A record remains preferable for a simple immutable DTO. No Lombok dependency or processor is installed in 2A.
+
+### Automated Java quality checks
+
+`backend/config/checkstyle/checkstyle.xml` runs through Maven Checkstyle Plugin 3.6.0 with Checkstyle 14.4.0, pinned separately from runtime dependencies. `./mvnw validate` checks Identity, bootstrap/security and their test packages; `./mvnw verify` includes the same gate. It checks four-space indentation, 120-character lines, braces/whitespace, explicit ordered/unused imports, naming patterns, exception suffixes, imported annotation types and the ban on `var`. The compiler uses `-Xlint:rawtypes -Werror` for production and test compilation.
+
+This is a checker, not a formatter: it writes no source files. The scoped include list avoids imposing a Foundation formatting migration. The two existing architecture/contract tests received only explicit-type/import adjustments needed for the no-var rule. Future authorized module work must extend the gate's include list. Existing Foundation formatting outside the gate was not normalized.
+
+Meaningful dependency names, logical-stage blank lines, exception-message safety and OOP responsibilities still need review; regex/name checks cannot establish semantic quality. Negative probes verified rejection of forbidden var, qualified annotations, bad exception names, imports, indentation, line length, basic names and raw generic types. No suppression was added.
+
 ### OpenAPI and refactoring compatibility
 
 Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponse`; do not remove contract metadata to reduce visual clutter.
@@ -96,7 +125,7 @@ Treat expected conflicts as ordinary domain outcomes. Retry deadlock/serializati
 
 ## Database changes
 
-Use one Flyway migration sequence under `backend/src/main/resources/db/migration/`. Foundation migration `V0001` already exists and has been applied; the first new migration must use `V0002`, for example `V0002__identity_create_account.sql`, with repository-wide increasing numbers and the owning module in the description. Allocate numbers when preparing a change and resolve collisions before merge. Module ownership is enforced by review even though the migration runner can access every table.
+Use one Flyway migration sequence under `backend/src/main/resources/db/migration/`. Foundation V0001 is immutable; Identity adds V0002 (accounts) and V0003 (sessions). Subsequent authorized changes start at V0004, with repository-wide increasing numbers and the owning module in the description. Allocate numbers when preparing a change and resolve collisions before merge. Module ownership is enforced by review even though the migration runner can access every table.
 
 Never edit an applied versioned migration; add a forward migration. Include constraints, indexes and relevant data backfills explicitly. Never use automatic production schema updates, implicit ORM DDL, or framework session/event schema creation. Keep runtime database permissions separate from migration permissions; production runtime has no DDL privileges.
 
@@ -162,4 +191,18 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Milestone 1 ends after the verified foundation; do not begin Milestone 2 automatically.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2A; do not begin 2B, 2C or gameplay automatically.
+
+## Identity security conventions
+
+Follow [ADR 0003](adr/0003-identity-sessions-and-security.md). Derive the current account from the authenticated UUID principal. Bootstrap may call identity::api but cannot import internal services; standard Spring interfaces connect the provider/session adapters. An isActive read is not sufficient to serialize a future sensitive mutation.
+
+Keep hashing outside registration's database transaction. The unique canonical-email constraint decides concurrency; do not replace it with a preflight SELECT. Spring Session SQL is owned by its JDBC adapter with Flyway migrations; do not access session tables from gameplay.
+
+Keep `PasswordPolicy.validateNewPassword` separate from `validateLoginInput`: registration's minimum must not reject correct older credentials during login. Validate safe login input before account lookup; malformed input is 400 and well-formed incorrect credentials are uniformly 401. Preserve password bytes and Argon2 parameters. Extend database email checks only through new migrations; V0004 validates the supported ASCII subset without silently repairing existing account identities.
+
+IdentityService retains TransactionTemplate because the transaction should begin after hashing and include only insertion/commit. Its default REQUIRED propagation joins an ambient transaction: it does not suspend a caller's transaction during hashing. The current HTTP registration caller is nontransactional, and registration is not an exported module API. Any future transactional caller must revisit that precondition. PostgreSQL tests observe transaction state at hashing/insertion and force failure after a real insert to verify rollback and safe retry.
+
+Do not log request bodies, hashes, cookies, CSRF tokens or rejected database rows. Sensitive request/hash/CSRF values have redacted toString methods; unexpected-error logging records exception class only because driver/parser messages may contain data. Do not enable JDBC bind-parameter or HTTP body/header trace logging with real users. Authentication tests use synthetic data.
+
+Document real flattened ProblemDetail JSON, explicit CSRF headers and cookie authentication. Hide framework-injected arguments from OpenAPI. Review the old endpoint/schema nodes before accepting a newly exported snapshot.

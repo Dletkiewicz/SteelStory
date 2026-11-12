@@ -1,4 +1,4 @@
-name: Foundation checks
+name: Backend and frontend checks
 on:
   push:
   pull_request:
@@ -22,8 +22,11 @@ jobs:
         run: |
           chmod +x mvnw
           ./mvnw --batch-mode --no-transfer-progress verify
-      - name: Confirm integration test report exists
-        run: test -s target/failsafe-reports/TEST-com.steelstory.FoundationIT.xml
+      - name: Confirm foundation and identity integration reports exist
+        run: |
+          test -s target/failsafe-reports/TEST-com.steelstory.FoundationIT.xml
+          test -s target/failsafe-reports/TEST-com.steelstory.identity.IdentityIT.xml
+          test -s target/failsafe-reports/TEST-com.steelstory.identity.IdentityMigrationIT.xml
   frontend:
     runs-on: ubuntu-latest
     defaults:
