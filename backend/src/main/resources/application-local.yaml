@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/steelstory}
+    username: ${DB_USERNAME:steelstory_local}
+    password: ${DB_PASSWORD:local-development-only}
+springdoc:
+  api-docs:
+    enabled: true

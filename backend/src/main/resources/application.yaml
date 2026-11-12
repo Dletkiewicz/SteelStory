@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: steelstory
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 10000
+  flyway:
+    enabled: true
+    clean-disabled: true
+    user: ${FLYWAY_USERNAME:${spring.datasource.username}}
+    password: ${FLYWAY_PASSWORD:${spring.datasource.password}}
+  sql:
+    init:
+      mode: never
+  mvc:
+    problemdetails:
+      enabled: true
+  modulith:
+    detection-strategy: explicitly-annotated
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+springdoc:
+  api-docs:
+    enabled: false
+  paths-to-match: /api/v1/**

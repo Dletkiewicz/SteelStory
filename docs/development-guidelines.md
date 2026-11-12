@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Updated after the first architectural review (APPROVED WITH CHANGES), 2026-11-11. These conventions govern future authorized implementation. Marked business/tooling proposals remain pending. The current task is documentation only.
+Status: Architecture APPROVED; Milestone 1: Foundation authorized, 2026-11-11. These conventions govern implementation. Marked business proposals remain pending; authentication and gameplay are outside this milestone.
 
 ## Work in small domain slices
 
@@ -11,6 +11,58 @@ Incremental module introduction is an explicit review requirement: create a modu
 Preserve the approved one-to-many Account -> Character model. Enforce any initial cap as concurrency-safe product policy, not a permanently unique account reference on characters. Model Strength, Dexterity, Intelligence, Constitution and Luck explicitly; extend through typed changes, migrations and versioned snapshots rather than EAV. Standard arena attacks require no defender acceptance or online presence; capture both participants consistently at initiation. Keep account gold/character silver marked pending until approved.
 
 Keep work scoped. Fix the requested behavior without unrelated renaming, formatting sweeps, dependency upgrades or refactoring. Explain necessary adjacent changes. Prefer plain language and explicit methods to generic frameworks. Use immutable value types and records where appropriate, composition over inheritance, and interfaces at actual module or infrastructure boundaries. Do not create an interface for every service merely to satisfy a pattern.
+
+## Java and Spring coding conventions
+
+These conventions are mandatory for new implementations and refactorings. Apply them to the task's scope rather than performing repository-wide cleanup. Use Java 25 features when they improve readability or safety; the existing no-preview policy still applies.
+
+### Files, packages and DTOs
+
+Every public class, interface, enum and record belongs in its own Java file named after the type. Request/response DTOs and other public API models must not be nested inside controllers. Non-public, narrowly scoped implementation details or test fixtures may remain nested when this genuinely helps understanding.
+
+Keep models at their owning boundary:
+
+| Kind | Package convention | Example |
+| --- | --- | --- |
+| Foundation HTTP DTO | `com.steelstory.bootstrap.web.dto` | `StatusResponse.java` |
+| Domain module HTTP DTO | `com.steelstory.<module>.internal.web.dto` | A request/response used by that module's controller |
+| Exported module API value | `com.steelstory.<module>.api.dto`, when a DTO subpackage is useful | An immutable command/result deliberately exposed through the named API |
+
+HTTP visibility is different from module visibility. A public HTTP DTO in `internal.web.dto` is still internal to its Modulith module. Do not move it into the exported `api` package simply because a controller uses it. If module API DTOs need a subpackage, include it deliberately in the named interface and verify access with Modulith tests; package naming alone does not export it. Never introduce a global DTO collection or create empty packages in advance.
+
+Prefer a record for a simple immutable request/response. Use an ordinary class when mutable state, lifecycle, identity or mapping requirements make it appropriate. Records are not an automatic choice for domain objects or persistence entities. A record containing a mutable collection still needs defensive copying when immutability is required.
+
+`StatusResponse` is the reference example: a standalone record in `bootstrap.web.dto`, imported by `StatusController`. It retains the two required fields and their allowed values. The controller can directly construct this constant connectivity response; no service or interface is necessary.
+
+### Responsibilities and dependencies
+
+Controllers handle routing, HTTP input/output and delegation. Business rules belong in domain objects and domain services, while application services coordinate use cases and transactions. Module-owned repositories/adapters handle data access. This division preserves the existing pragmatic DDD boundaries; it does not require an extra service for every endpoint.
+
+Use constructor injection for required dependencies, stored in final fields. Avoid field injection. For example, when a real use case needs a collaborator:
+
+```java
+private final ExpeditionService expeditionService;
+
+public ExpeditionController(ExpeditionService expeditionService) {
+    this.expeditionService = expeditionService;
+}
+```
+
+This is a future-feature illustration, not authorization to create that module. A single constructor needs no redundant injection annotation. Prefer a concrete service when there is one implementation and no meaningful interface boundary. Retain interfaces for actual module contracts or persistence ports, not merely for mocking. Each added type, package or layer must have an identifiable responsibility.
+
+### Formatting and naming
+
+Use four spaces for indentation and blank lines between methods. Keep lines within 120 characters where practical; wrap long signatures, calls and annotations rather than compressing them. Put multiline annotation arguments on separate lines and keep method bodies expanded. Use imports instead of fully qualified class names in code, except when resolving a genuine name collision; prefer explicit imports over wildcards.
+
+Choose names that explain purpose, such as `StatusResponse`, `ExpeditionService` and `findActiveExpedition`. Avoid unqualified names such as `Data`, `Helper` or `Manager`; a name like `ApiExceptionHandler` is appropriate when exception handling is its specific responsibility. Name variables for their meaning rather than shortening them unnecessarily.
+
+Prefer straightforward conditionals and loops when they are easier to debug than chained streams. Use Optional for a meaningful absence contract, not as a replacement for every conditional. Introduce generics or design patterns only for an actual reusable relationship. Modern syntax is useful when the result is clearer, not merely shorter.
+
+### OpenAPI and refactoring compatibility
+
+Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponse`; do not remove contract metadata to reduce visual clutter.
+
+A style refactoring must preserve endpoint paths, HTTP methods/status codes, content types, JSON fields and generated OpenAPI schemas. Run existing HTTP tests and the integration contract comparison. Do not regenerate the checked contract to conceal a changed schema. Tests need editing only when they depend on the relocated Java type or when a behavioral coverage gap matters; do not add tests for file placement or record accessors.
 
 ## Backend boundaries
 
@@ -44,7 +96,7 @@ Treat expected conflicts as ordinary domain outcomes. Retry deadlock/serializati
 
 ## Database changes
 
-Use one Flyway migration sequence under the future `backend/src/main/resources/db/migration/`. Proposed convention: `V0001__identity_create_account.sql`, with repository-wide increasing numbers and the owning module in the description. Allocate numbers when preparing a change and resolve collisions before merge. Module ownership is enforced by review even though the migration runner can access every table.
+Use one Flyway migration sequence under `backend/src/main/resources/db/migration/`. Foundation migration `V0001` already exists and has been applied; the first new migration must use `V0002`, for example `V0002__identity_create_account.sql`, with repository-wide increasing numbers and the owning module in the description. Allocate numbers when preparing a change and resolve collisions before merge. Module ownership is enforced by review even though the migration runner can access every table.
 
 Never edit an applied versioned migration; add a forward migration. Include constraints, indexes and relevant data backfills explicitly. Never use automatic production schema updates, implicit ORM DDL, or framework session/event schema creation. Keep runtime database permissions separate from migration permissions; production runtime has no DDL privileges.
 
@@ -84,11 +136,11 @@ Keep authentication cookies out of JavaScript, send CSRF tokens correctly, and t
 
 ### OpenAPI contract workflow
 
-OpenAPI documentation is required for implemented public endpoints. The proposed springdoc export workflow and verified Boot 4.1 candidate are in [ADR 0002](adr/0002-tech-stack.md#openapi-and-typed-client-tooling-amendment). Keep HTTP documentation annotations in web DTOs/adapters, not pure domain code. Describe stable operation IDs, schemas, session authentication and CSRF, actor/target semantics, idempotency headers, errors/conflicts, pagination, UTC dates and decimal-string currency/XP values. Exclude internal grants and wallet primitives from the public contract.
+OpenAPI documentation is required for implemented public endpoints. Milestone 1 adopts springdoc 3.2.0 and an integration-test export compared structurally with `docs/api/openapi.json`; see [ADR 0002](adr/0002-tech-stack.md#milestone-1-implementation-record). Keep HTTP documentation annotations in web DTOs/adapters, not pure domain code. Document security, idempotency, errors, pagination, dates and amounts when those features exist. The current status endpoint is public and read-only. Exclude internal grants and wallet primitives from the public contract.
 
-When this workflow is implemented, export a normalized contract from an integration test profile, validate it, compare it with the reviewed version, and test representative response serialization/security behavior. Review breaking changes before release; generated docs alone do not prove runtime conformance. Agree the OpenAPI dialect and supported schema subset with any client generator. Restrict or disable production docs endpoints/UI unless explicitly needed.
+The current integration test exports and structurally compares the contract with the reviewed version and exercises real response serialization. Extend those checks with later API/security behavior. Review breaking changes before release; generated docs alone do not prove runtime conformance. Agree the supported schema subset with any future client generator. Runtime docs are disabled outside local/test configuration by default.
 
-Typed TypeScript client generation remains a proposal. If adopted, pin the generator/configuration, keep generated files in a dedicated directory, never edit them by hand, and use a small hand-written wrapper for cookies/CSRF, errors and retries. Typecheck generated output with the actual frontend baseline and have CI detect regeneration drift. Keep contract documentation even if a hand-written client is chosen. Do not install tooling or create an endpoint spec before authorized implementation.
+Typed TypeScript client generation is deferred until it demonstrates a benefit. The current adapter validates the status response at runtime. If generation is later adopted, pin the generator/configuration, keep generated files separate, never edit them by hand, and use a small wrapper for transport concerns. Typecheck generated output with the actual frontend baseline and detect regeneration drift in CI.
 
 ## Reproducible builds and CI
 
@@ -110,4 +162,4 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop at an explicit user-requested review boundary; the present phase ends with architectural review, not scaffolding.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Milestone 1 ends after the verified foundation; do not begin Milestone 2 automatically.

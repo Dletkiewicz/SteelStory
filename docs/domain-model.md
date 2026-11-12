@@ -1,6 +1,6 @@
 # Steelstory domain model
 
-Status: **Updated after architectural approval with changes**, 2026-11-11. Approved requirements are listed explicitly; aggregate implementation details and marked business proposals remain subject to review. This is not a database schema or approved game balance specification. Module dependencies are defined in [architecture](architecture.md); this document defines ownership and invariants.
+Status: **Architecture APPROVED; conceptual domain model**, 2026-11-11. Milestone 1 implements technical foundation only; none of these gameplay aggregates is implemented. Approved requirements are listed explicitly; aggregate details and marked business proposals remain subject to review. This is not a database schema or approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
 
 ## Established game requirements
 

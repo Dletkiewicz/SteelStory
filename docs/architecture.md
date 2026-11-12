@@ -1,6 +1,8 @@
 # Steelstory architecture
 
-Status: **APPROVED WITH CHANGES after the first architectural review**, updated 2026-11-11. This revision incorporates the requested changes. Approved requirements and pending proposals are distinguished below; all structures describe future implementation. No gameplay or infrastructure is implemented in this phase.
+Status: **APPROVED**, updated 2026-11-11. Milestone 1: Foundation is authorized and implemented. Approved requirements and marked business proposals remain distinguished below. The domain module map describes future incremental work; no gameplay modules exist yet.
+
+The current foundation is one Maven backend, a Vite frontend and local PostgreSQL Compose service. `bootstrap.web` contains only the public `GET /api/v1/status`, global problem responses and OpenAPI metadata. Explicitly annotated Modulith detection intentionally finds zero gameplay modules; its verification test remains active. Flyway V0001 creates the `steelstory` namespace only. The frontend uses a hand-written typed/runtime-checked adapter. Authentication and client generation are deferred. See [README](../README.md) for verified commands and [ADR 0002](adr/0002-tech-stack.md#milestone-1-implementation-record) for resolved tooling.
 
 Approved requirements include the retained stack and modular monolith, one-to-many Account -> Character cardinality, five initial attributes (Strength, Dexterity, Intelligence, Constitution and Luck), asynchronous arena attacks without defender acceptance, a planned auction house, OpenAPI contract documentation, and incremental module introduction. Attribute formulas and explicitly marked business proposals remain undecided.
 
@@ -152,9 +154,9 @@ The SPA organizes features by player capability. It can display estimates and ca
 
 **Required:** document implemented public HTTP endpoints with OpenAPI, including schemas, stable operation IDs, authentication/CSRF requirements, ownership semantics, idempotency headers, conflicts/errors, pagination, UTC times and decimal-string amounts. Internal module APIs are not HTTP contracts and must not be exposed automatically.
 
-**Tooling proposal:** derive the contract from Spring MVC adapters/DTOs using springdoc, export a deterministic specification during integration tests, and review its diff with each API change. Keep annotations out of domain models. ADR 0002 records source-verified Boot 4.1 compatibility for springdoc 3.2.0. Do not create a speculative endpoint specification in this documentation-only phase.
+**Implemented in Milestone 1:** derive the status contract from Spring MVC adapters/DTOs using springdoc 3.2.0, export the specification during integration tests and compare it structurally with `docs/api/openapi.json`. Review its diff with each API change. Keep annotations out of domain models. ADR 0002 records resolved and executed Boot 4.1 compatibility. Add contracts for later endpoints only with their authorized features.
 
-Consider generating a typed TypeScript client from the reviewed specification with OpenAPI Generator's `typescript-fetch` generator. This is a pending tooling choice; its interchange boundary is OpenAPI, not Spring classes. If adopted, pin the generator/configuration, keep generated code separate from a small hand-written transport wrapper, and check regeneration drift in CI. The wrapper handles session cookies, CSRF, errors and idempotency; generation is not runtime validation or authorization. Contract dialect and unsupported schema constructs must be verified with the chosen generator and TypeScript build. Restrict or disable runtime API docs/UI in production unless explicitly exposed by policy.
+TypeScript client generation is deferred until it demonstrates a benefit. The current status adapter is typed and runtime-checked. OpenAPI Generator's `typescript-fetch` remains a possible future candidate. If adopted, pin the generator/configuration, keep generated code separate from a small hand-written transport wrapper, and check regeneration drift in CI. The wrapper handles transport concerns as they are introduced; generation is not runtime validation or authorization. Contract dialect and unsupported constructs must be verified with the chosen generator and TypeScript build. Runtime API docs are disabled outside the local/test configuration by default.
 
 ## 7. Migrations, testing, and operations
 
@@ -186,7 +188,7 @@ The database remains the shared consistency and capacity limit. Multiple backend
 | Inventory overflow | Durable inventory delivery storage for earned rewards and marketplace deliveries; agree capacity/claim rules before implementation |
 | Premium purchases | Provider, verification, refunds, chargebacks, promotional gold and transferability unresolved |
 | Game balance | Strength, Dexterity, Intelligence, Constitution and Luck are confirmed; formulas, XP curve, loot distributions, item binding and guild limits remain unresolved |
-| API tooling | OpenAPI documentation is required; approve the proposed export workflow, dialect, springdoc candidate and whether to generate the TypeScript client; verify the resolved toolchain when implementation is authorized |
+| API tooling | OpenAPI 3.1 export and springdoc 3.2.0 are implemented and tested; TypeScript client generation is deferred until useful |
 | Operations | Expected concurrency, action volume, latency/settlement targets, hosting, backup retention and RPO/RTO unresolved |
 
-Review this documentation revision and pending proposals; application work still requires explicit authorization. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).
+Milestone 1 authorization covers the foundation only; later feature work requires its own scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).

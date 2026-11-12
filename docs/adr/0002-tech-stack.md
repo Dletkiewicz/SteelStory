@@ -1,17 +1,17 @@
 # ADR 0002: Technology stack and compatibility baseline
 
 - Date and source-check date: 2026-11-11
-- Status: Core stack retained after approval with changes; exact baseline and new tooling proposals remain subject to implementation validation
+- Status: Architecture APPROVED; Milestone 1 baseline resolved and exercised locally
 - Review update: 2026-11-11; OpenAPI documentation required, typed-client generation under consideration
-- Verification level: official documentation, release records, and source metadata; **not a resolved or executed build**
+- Verification level: official source research plus executed Milestone 1 builds, database integration tests and browser smoke checks; hosted CI execution remains pending
 
 ## Context and decision
 
 Use the requested Java/Spring and React stack with PostgreSQL, Flyway, Docker Compose and GitHub Actions. Select stable releases, keep Spring dependencies aligned through BOMs, and pin reproducible tooling when implementation is authorized. Do not substitute a preview release to satisfy a version requirement.
 
-The tables below are a documented baseline, not a claim that every component is the newest release. Recheck patches and security advisories when scaffolding. No dependencies were installed and no build manifests were created during this review phase.
+The tables below retain the original documented baseline, not a claim that every component is newest. The final implementation record below supersedes review-phase verification limits and records what was actually resolved. Recheck patches and security advisories during maintenance.
 
-The first review explicitly retains Java 25, Spring Boot 4.1, Spring Modulith, PostgreSQL, Flyway, Spring JDBC, React and TypeScript. Other existing stack choices remain unchanged. The review adds OpenAPI contract documentation and evaluation of a generated TypeScript client. This amendment does not approve every pending business rule or authorize application implementation. Modules and their dependencies are introduced only when an authorized feature needs them.
+The review retains Java 25, Spring Boot 4.1, Spring Modulith, PostgreSQL, Flyway, Spring JDBC, React and TypeScript. Other existing stack choices remain unchanged. Final architectural approval explicitly authorizes Milestone 1: Foundation. Modules and their dependencies are introduced only when an authorized feature needs them.
 
 ## Backend and database
 
@@ -57,11 +57,11 @@ Vite's official React/TypeScript template currently lists React 19.3.1, TypeScri
 
 Use the Tailwind Vite integration and test the production CSS output. Vite transforms source; typechecking must run separately. The browser is a client of a versioned HTTP contract, so Java and frontend library versions do not require a shared release number. Agree supported browsers before selecting CSS/browser targets. [Tailwind Vite installation](https://tailwindcss.com/docs/installation/using-vite).
 
-Docker Compose will define local PostgreSQL and optional application containers using the Compose Specification and `docker compose` CLI. Select/pin a supported Docker/Compose toolchain during bootstrap and verify it with Testcontainers on the actual runner. GitHub Actions will execute reproducible builds on a Docker-capable Linux runner, with actions pinned to reviewed commit SHAs. No workflow, Docker installation, image pull or speculative hosting platform is part of this task. [Compose model](https://docs.docker.com/compose/intro/compose-application-model/).
+Docker Compose defines local PostgreSQL using the Compose Specification and `docker compose` CLI. The implementation record below gives the exercised Docker/Compose toolchain. GitHub Actions is configured for builds on a Docker-capable Linux runner, with actions pinned to reviewed commit SHAs. Automatic deployment and additional hosting infrastructure remain outside Milestone 1. [Compose model](https://docs.docker.com/compose/intro/compose-application-model/).
 
 ## OpenAPI and typed-client tooling amendment
 
-**Approved requirement:** maintain OpenAPI documentation for implemented public HTTP contracts. **Proposed workflow:** Spring MVC adapters and DTOs define the contract, springdoc exports it in integration tests, and a normalized specification is reviewed/versioned with API changes. Do not generate domain entities or expose internal module APIs. A contract-first workflow remains an alternative, but two independently maintained authoritative specifications would invite drift.
+**Approved requirement:** maintain OpenAPI documentation for implemented public HTTP contracts. **Workflow adopted in Milestone 1:** Spring MVC adapters and DTOs define the contract, springdoc exports it in integration tests, and the specification is reviewed/versioned with API changes. Do not generate domain entities or expose internal module APIs. A contract-first workflow was considered, but two independently maintained authoritative specifications would invite drift.
 
 **Verified tooling candidate: `org.springdoc:springdoc-openapi-starter-webmvc-api:3.2.0`.** The official compatibility matrix maps Boot 4.1.x to springdoc 3.1.x–3.2.x. The tagged 3.2.0 POM directly uses Boot 4.1.2. Select the API-only starter for contract export; a documentation UI is optional. This is an explicitly versioned non-Boot-managed dependency. [Compatibility matrix](https://springdoc.org/), [tagged POM](https://raw.githubusercontent.com/springdoc/springdoc-openapi/v3.2.0/pom.xml), [stable release](https://github.com/springdoc/springdoc-openapi/releases/tag/v3.2.0).
 
@@ -73,7 +73,7 @@ If adopted, generate into a dedicated frontend directory from the reviewed speci
 
 ## Compatibility validation required when implementation is authorized
 
-Documentation verification establishes a credible baseline, not end-to-end certification. The first implementation phase must:
+The original documentation verification established a baseline, not end-to-end certification. The checklist below covers foundation and later authorized features; the implementation record reports completed checks. Authentication/session/security integration and client generation remain deferred under the explicit Milestone 1 scope.
 
 1. Resolve the Boot parent and Modulith BOM from stable repositories; inspect the effective POM and dependency tree for unwanted overrides or preview transitive versions.
 2. Compile and test on the pinned Java 25 toolchain, including Modulith verification. Verify Mockito instrumentation on Java 25 using its supported test-agent setup if required; do not hide instrumentation failures with global JVM flags.
@@ -89,4 +89,22 @@ If evidence or resolution conflicts, document the conflict and resolve it within
 
 The stack fits the required architecture with one relational transaction boundary and standard JVM tooling. Explicit SQL and separate domain values cost some mapping code but make ownership and concurrency visible. Spring Boot 4-era APIs, JUnit 6 and Testcontainers 2 mean older tutorials may use incompatible imports or artifact names. BOM management reduces manual version drift; periodic reviewed patch updates remain necessary.
 
-OpenAPI makes HTTP changes reviewable and can reduce duplicate TypeScript definitions. Generation adds a toolchain and contract-evolution obligation; it neither implements authorization nor guarantees runtime payload validity. Documentation/source compatibility was checked for this amendment; no dependency resolution, API export, client generation or application test was run.
+OpenAPI makes HTTP changes reviewable and can reduce duplicate TypeScript definitions. Generation adds a toolchain and contract-evolution obligation; it neither implements authorization nor guarantees runtime payload validity. The original review used source evidence only; the implementation record below reports subsequent executed verification.
+
+## Milestone 1 implementation record
+
+Milestone 1 adopts the baseline and springdoc 3.2.0 API-only starter. Maven resolved Boot 4.1.2, Modulith 2.1.2, Spring Framework 7.0.10, Spring JDBC 7.0.10, Flyway 12.4.0, PostgreSQL JDBC 42.7.14, JUnit Jupiter 6.0.3, Mockito 5.23.0 and Testcontainers 2.0.5. Security/session libraries are not enabled in this milestone. No JPA was added.
+
+The executed local toolchain is Oracle JDK 25.0.2, Maven Wrapper 3.3.4 downloading Maven 3.9.16, Node 24.22.2 and npm 10.8.2 on Windows. `.nvmrc` pins Node; package manifests and lockfile pin frontend dependencies. CI uses Temurin 25.0.2 on Linux; that runner/distribution has not been executed from this workspace.
+
+Frontend resolution retained React/React DOM 19.3.1, TypeScript 7.0.2, Vite 8.3.6, plugin-react 6.2.1, Tailwind/plugin 4.3.5. Additional tooling is Oxlint 1.93.0, React/DOM types 19.3.0 and Node types 24.13.6. Registry inspection found typescript-eslint 8.72.2 requires TypeScript below 6.1, so Oxlint was selected to retain TypeScript 7 without ignoring peer requirements. Typecheck, lint and production build all execute successfully; no approved technology was downgraded.
+
+The npm lockfile also records upstream optional WASM dependencies with prerelease versions (`@emnapi/core` and `@emnapi/runtime` 2.0.0-beta.2). These are transitive development-tool dependencies, not selected application libraries; no compatibility override was forced. The inspected installed Windows dependency graph reports their stable 1.11.3 variants. The Linux CI graph/build must still be exercised before claiming cross-platform verification.
+
+Docker Engine 29.0.1 / Compose 2.40.3 ran PostgreSQL 18.6. Compose and integration tests pin its inspected official digest `sha256:e3d24f6906d0760bf4da0dae872415391ededefad23fd471c47dc53b0ddf3c42`. PostgreSQL 18 stores its versioned data directory under the mounted `/var/lib/postgresql` volume. Local port 5432 was occupied, so verification used the supported `POSTGRES_PORT=55432` / `DB_URL` overrides.
+
+OpenAPI 3.1 is exported by the running application and compared structurally to `docs/api/openapi.json` by the PostgreSQL integration test. Fixed relative server metadata avoids random-port drift. Contract/DTO annotations are confined to bootstrap web adapters. Docs are enabled only in local/test configuration by default. Code generation is deferred because a single status endpoint is adequately served by a typed/runtime-checked adapter.
+
+The full Maven lifecycle runs four unit/architecture tests and two real PostgreSQL integration tests with zero skips. Failsafe binds both integration-test and verify and fails when no tests are found; Docker absence is a failure, not an automatic skip. The test JVM uses Mockito's managed Java agent explicitly for Java 25. CI performs the same verification, frontend checks/build and confirms the integration report exists. No deployment workflow is present.
+
+Production deployment, authentication/security/session setup, migration role provisioning and game modules remain future work. Default configuration requires environment database credentials; only the explicitly selected local profile/Compose file contains disposable development credentials. Flyway supports separate `FLYWAY_USERNAME`/`FLYWAY_PASSWORD`; local development intentionally uses one role. A production migration release process is not claimed by this foundation.

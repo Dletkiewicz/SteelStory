@@ -1,7 +1,7 @@
 # ADR 0001: Domain-oriented modular monolith
 
 - Date: 2026-11-11
-- Status: Accepted with review amendments; currency ownership proposal remains pending
+- Status: Accepted after final architectural approval; marked business proposals remain pending
 - Review update: 2026-11-11; overall architecture APPROVED WITH CHANGES
 
 ## Context
@@ -12,7 +12,7 @@ Steelstory will have tightly related progression, inventory, currency, and multi
 
 Build one Spring Boot backend artifact and one PostgreSQL database. Organize backend code into domain modules, initially as packages within one Maven application. Use Spring Modulith verification and explicit dependency allowlists to enforce boundaries. Keep domain rules independent of Spring MVC and persistence adapters.
 
-Introduce modules incrementally as authorized features need them. The planned module map is a boundary design, not a request to scaffold twelve modules or their tables at once. Architectural approval does not authorize implementation in the current documentation-only task.
+Introduce modules incrementally as authorized features need them. The planned module map is a boundary design, not a request to scaffold twelve modules or their tables at once. Milestone 1 is explicitly authorized and implements technical bootstrap/web adapters only, with zero gameplay modules. Later milestones are not authorized by this task.
 
 Each module exposes a small named API and owns its tables. Other modules use immutable API values and identifiers, never internal classes, repositories, or persistence entities. Prefer direct synchronous calls. A workflow's application service owns its database transaction and can call several module APIs within that transaction. Each participant validates its own invariants.
 
