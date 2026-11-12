@@ -1,8 +1,8 @@
 # Steelstory architecture
 
-Status: **APPROVED**, updated 2026-11-11. Milestone 1: Foundation is authorized and implemented. Approved requirements and marked business proposals remain distinguished below. The domain module map describes future incremental work; no gameplay modules exist yet.
+Status: **APPROVED**, updated 2026-11-12. Foundation is complete; Milestone 2A: Identity is authorized and implemented. Approved requirements and marked business proposals remain distinguished below. The domain module map describes future incremental work; no gameplay modules exist yet.
 
-The current foundation is one Maven backend, a Vite frontend and local PostgreSQL Compose service. `bootstrap.web` contains only the public `GET /api/v1/status`, global problem responses and OpenAPI metadata. Explicitly annotated Modulith detection intentionally finds zero gameplay modules; its verification test remains active. Flyway V0001 creates the `steelstory` namespace only. The frontend uses a hand-written typed/runtime-checked adapter. Authentication and client generation are deferred. See [README](../README.md) for verified commands and [ADR 0002](adr/0002-tech-stack.md#milestone-1-implementation-record) for resolved tooling.
+The application is one Maven backend, a Vite frontend and local PostgreSQL Compose service. `bootstrap.web` contains the public `GET /api/v1/status`, global problem responses and OpenAPI metadata. Explicit Modulith detection finds exactly one module, `identity`, with no allowed domain dependencies; verification remains active. Its named `api` exports only `AccountId` and `AccountAccess.isActive`. Bootstrap security consumes that API and standard Spring authentication interfaces, never identity internals. Flyway V0001 remains unchanged; V0002/V0003 add accounts and JDBC sessions. The frontend retains its small typed status adapter; authentication screens and client generation are deferred. See [README](../README.md), [ADR 0002](adr/0002-tech-stack.md) and [ADR 0003](adr/0003-identity-sessions-and-security.md).
 
 Approved requirements include the retained stack and modular monolith, one-to-many Account -> Character cardinality, five initial attributes (Strength, Dexterity, Intelligence, Constitution and Luck), asynchronous arena attacks without defender acceptance, a planned auction house, OpenAPI contract documentation, and incremental module introduction. Attribute formulas and explicitly marked business proposals remain undecided.
 
@@ -142,7 +142,7 @@ Expedition/arena modules own results and call `rewards` only for legitimate comp
 
 ## 6. Security and API
 
-Propose Spring Security server-side sessions with secure, HttpOnly, SameSite cookies and CSRF protection for unsafe requests. Use Spring Session JDBC when authentication is introduced so sessions survive instance changes without Redis or sticky routing. Migrate its schema with Flyway. Restrict CORS if a separate origin is later required; never combine credentialed requests with wildcard origins.
+Implemented in 2A: Spring Security server-side sessions with Secure (outside local HTTP), HttpOnly, SameSite=Lax cookies and CSRF on registration/login/logout. Spring Session JDBC stores sessions in PostgreSQL without Redis or sticky routing; Flyway owns its schema. An explicit CSRF endpoint returns the token for `X-CSRF-TOKEN`; clients fetch again after login/logout. No CORS permission is added. Restrict CORS if a separate origin is later required; never combine credentialed requests with wildcard origins. [ADR 0003](adr/0003-identity-sessions-and-security.md) defines the boundaries and public-launch blockers.
 
 Use adaptive password hashing through Spring Security, session rotation at login, logout invalidation, and authorization at application entrypoints. Resource IDs are not authorization. Sensitive account-status changes and worker-initiated mutations must follow the same eligibility rules, with explicitly documented exceptions for refund/settlement obligations. Secrets belong in deployment configuration, not source or Vite environment variables exposed to browsers.
 
@@ -191,4 +191,4 @@ The database remains the shared consistency and capacity limit. Multiple backend
 | API tooling | OpenAPI 3.1 export and springdoc 3.2.0 are implemented and tested; TypeScript client generation is deferred until useful |
 | Operations | Expected concurrency, action volume, latency/settlement targets, hosting, backup retention and RPO/RTO unresolved |
 
-Milestone 1 authorization covers the foundation only; later feature work requires its own scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).
+Authorization currently ends at Milestone 2A Identity; 2B/2C and gameplay require their own scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).

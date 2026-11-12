@@ -2,7 +2,7 @@
 
 ## Current phase and scope
 
-The Steelstory architecture is APPROVED. Milestone 1: Foundation is explicitly authorized: backend/frontend setup, PostgreSQL/Flyway, status/error handling, OpenAPI, tests and CI. This authorization permits dependency installation and relevant verification. Do not implement authentication, gameplay, currencies, PvP, inventory or marketplace, or scaffold empty domain modules. Stop after Milestone 1; do not start Milestone 2 automatically. Do not commit or push.
+The Steelstory architecture is APPROVED. Milestone 1: Foundation is complete. Milestone 2A: Identity is explicitly authorized: accounts, credentials, Spring Security authentication, JDBC sessions, CSRF, migrations, OpenAPI, documentation and tests. This authorization permits necessary dependency installation and verification. Implement only identity; do not implement characters, gameplay, currencies, PvP, inventory, marketplace or frontend login/registration screens, or scaffold empty domain modules. Stop after Milestone 2A; do not start 2B, 2C or later milestones automatically. Do not commit or push.
 
 Read [README](README.md), [architecture](docs/architecture.md), [domain model](docs/domain-model.md), [development guidelines](docs/development-guidelines.md), and relevant [ADRs](docs/adr/0001-modular-monolith.md) before implementation. Treat proposed game rules as proposals; do not silently convert unresolved choices into requirements.
 
@@ -28,6 +28,8 @@ Read [README](README.md), [architecture](docs/architecture.md), [domain model](d
 
 These rules apply to every new implementation and refactoring. Practical examples and package conventions are in [development guidelines](docs/development-guidelines.md#java-and-spring-coding-conventions). Apply them within the requested scope; do not reformat unrelated code.
 
+Milestone 2A's Java quality gate is authorized before any 2B work. Preserve authentication, CSRF/session behavior, HTTP/JSON/OpenAPI and error semantics during refactoring. V0001, V0002 and V0003 are applied migrations and must not be changed.
+
 - Put every public class, interface, enum and record in its own Java file. Never nest request/response DTOs or other public API models inside controllers.
 - Keep DTOs with their owning module and boundary: HTTP DTOs in `<module>.internal.web.dto`, module API values in `<module>.api.dto` when needed. Foundation HTTP DTOs belong in `bootstrap.web.dto`. No global DTO package; Java `public` does not grant cross-module access.
 - Prefer records for simple immutable DTOs. Choose ordinary classes when behavior, lifecycle or persistence mapping calls for them; do not make every type or persistence entity a record.
@@ -37,6 +39,15 @@ These rules apply to every new implementation and refactoring. Practical example
 - Use four-space indentation, blank lines between methods, multiline long annotations and imports instead of fully qualified names (except unavoidable name collisions). Prefer lines within 120 characters, readable wrapping and expanded method bodies.
 - Name types, methods and variables after their responsibility. Avoid vague `Data`, `Handler`, `Helper` or `Manager` names unless meaningfully qualified.
 - Prefer explicit control flow. Use streams, Optional, generics, patterns and Java 25 features only when they improve clarity or safety, not solely to shorten code. Keep domain code independent of Spring and persistence APIs.
+- Use full dependency names reflecting their types and responsibilities: `accountRepository`, `passwordHashing`, `transactionTemplate`, `accountAuthenticationProvider` where relevant. Avoid shorthand such as `accounts`, `passwords` or `transactions`. Methods should express business intent.
+- Do not use `var` in Java production code or tests. Declare explicit local types; never use raw types. Prefer a clear `orElseThrow` to a manual presence check followed by `Optional.get()`; do not introduce unnecessary Optional wrappers or generics.
+- Separate logical method stages with blank lines, including after if/else or loop blocks before a distinct next step or return. Wrap long constructors/calls and keep one responsibility per statement. Use explicit ordered imports, including normal Java imports in `package-info.java`; do not fully qualify annotation names.
+- Give custom exceptions descriptive names ending in `Exception` unless an explicit convention justifies otherwise. Keep stable business messages/codes in their actual owner when shared; do not duplicate them or create a global Errors/Constants collection. Single-use literals do not automatically need constants.
+- Lombok is optional and requires a concrete benefit, verified Java 25/Maven compatibility and explicit processor configuration before adoption. `@RequiredArgsConstructor` and `@Slf4j` may be used selectively. Keep constructors that initialize collaborators or enforce invariants explicit. Do not use `@Data`, generated domain setters or speculative builders; prefer ordinary records for simple DTOs. Lombok is currently not installed.
+- Keep domain invariants in immutable values/behavioral objects, not DTOs or controllers. Retain interfaces only at real boundaries and compose responsibilities without speculative base classes.
+- Keep registration hashing outside its short `TransactionTemplate` callback. Do not replace it with method-level `@Transactional` without reviewing the resulting hashing/transaction boundary.
+- Maven `validate` runs the scoped Checkstyle gate for Identity/security and their tests. Run `verify` for architecture, security and database/contract checks as well. Do not suppress checks to accommodate new violations; no automatic repository-wide formatting is authorized.
+- Use a compatible JDK 25 without preview features, including Temurin 25.0.5. A historical Oracle installation path or patch is not a project prerequisite; CI's explicit patch pin remains a reproducibility choice.
 
 ## Protect game correctness
 
@@ -58,4 +69,4 @@ These rules apply to every new implementation and refactoring. Practical example
 
 Update architecture, domain/API documentation, development instructions and README when behavior or conventions change. Add/update the appropriate ADR for consequential decisions and explain changes to module dependencies. Separate verified facts, proposed defaults and unresolved questions.
 
-Before finishing, report changed files, resolved versions, commands executed, test results, known limitations and local run instructions. Run `backend/mvnw verify` (from backend; Docker required) and frontend `npm ci`, `npm run typecheck`, `npm run lint`, `npm run build` using the pinned Node toolchain. Never skip integration tests because Docker is unavailable; report the blocker. Respect the Milestone 1 stop.
+Before finishing, report changed files, resolved versions, commands executed, test results, known limitations and local run instructions. Run `backend/mvnw verify` (from backend; Docker required) and frontend `npm ci`, `npm run typecheck`, `npm run lint`, `npm run build` using the pinned Node toolchain. Never skip integration tests because Docker is unavailable; report the blocker. Respect the Milestone 2A stop.

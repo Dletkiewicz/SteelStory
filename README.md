@@ -1,10 +1,10 @@
 # Steelstory
 
-Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; no authentication or gameplay is implemented.
+Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Gameplay and frontend authentication screens remain deferred.
 
 ## Prerequisites
 
-Use Java **25.0.2**, Maven **3.9.16** via the included Wrapper **3.3.4** (no global Maven required), Node **24.22.2** (see `.nvmrc`), npm **10.8.2**, and a running Docker daemon with Compose. Tested locally on Windows with Oracle JDK 25.0.2, Docker 29.0.1 and Compose 2.40.3. CI is configured for Linux/Temurin 25.0.2; hosted CI has not yet run.
+Use a compatible **JDK 25** without preview features (including **Temurin 25.0.5**), Maven **3.9.16** via the included Wrapper **3.3.4** (no global Maven required), Node **24.22.2** (see `.nvmrc`), npm **10.8.2**, and a running Docker daemon with Compose. Oracle JDK 25.0.2 was the original local verification environment, not a required vendor, patch or installation path. CI retains its Linux/Temurin 25.0.2 pin for reproducibility; hosted CI has not yet run.
 
 Set `JAVA_HOME` to your JDK 25 installation and put its `bin` directory on PATH. Switch to the pinned Node version using your usual version manager, then verify:
 
@@ -73,9 +73,38 @@ Stop application terminals with Ctrl+C. `docker compose stop` preserves database
 - `GET http://localhost:8080/v3/api-docs` exports OpenAPI 3.1 in the local profile. The reviewed contract is [docs/api/openapi.json](docs/api/openapi.json). No Swagger UI or generated client is installed.
 - Unhandled failures return a sanitized RFC 9457 problem with `INTERNAL_ERROR`; framework errors preserve their HTTP status.
 
-Flyway applies `V0001__foundation_create_schema.sql` at startup, creating only the `steelstory` namespace and its migration history in `public`. No domain tables exist. Applied migrations are immutable; startup validates checksums and fails on errors. SQL auto-initialization is disabled.
+Flyway applies V0001 (the unchanged foundation namespace), V0002 (identity accounts), V0003 (JDBC sessions) and V0004 (email invariants). Migration history stays in `public`; identity tables live in `steelstory`. Applied migrations are immutable; startup validates checksums and fails on errors. V0004 validates existing email values and fails if invalid rows exist; it never rewrites or deletes account identities. SQL and Spring Session schema auto-initialization are disabled.
 
-Without the local profile, `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` are required; docs are disabled. Optional `FLYWAY_USERNAME`/`FLYWAY_PASSWORD` allow a separately provisioned migration role. Local development uses one role. Production role provisioning, migration release orchestration, TLS/hosting and authentication remain future work; this is not a production deployment configuration.
+Without the local profile, `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` are required; docs are disabled and session cookies require HTTPS. Optional `FLYWAY_USERNAME`/`FLYWAY_PASSWORD` allow a separately provisioned migration role. Local development uses one role. Production role provisioning, migration release orchestration and TLS/hosting remain future work; this is not a production deployment configuration.
+
+## Identity locally and in Postman
+
+Use the same Compose, backend `local` profile and Vite commands above. Existing VS Code launch settings and DBeaver connection details still apply. No React login/registration screens are included in 2A. In DBeaver, accounts are in `steelstory.identity_accounts`; session tables are framework-owned and must not be edited by application modules.
+
+Use one host consistently (`localhost` or `127.0.0.1`) so the cookie jar can retain the session. Postman's cookie jar must be enabled; no Authorization header is needed.
+
+1. `GET http://localhost:8080/api/v1/auth/csrf` returns `{"headerName":"X-CSRF-TOKEN","token":"..."}` and sets an HttpOnly `SESSION` cookie. Copy the returned token into an `X-CSRF-TOKEN` request header. In Postman's post-response script you can use `pm.environment.set("csrfToken", pm.response.json().token)`, then set the header value to `{{csrfToken}}`. Keep the environment local; do not export session/CSRF secrets.
+2. `POST /api/v1/auth/register`, with that header and `Content-Type: application/json`, creates the account (201). Use a synthetic local address and a disposable 15–128 character password:
+
+   ```json
+   {"email":"player@example.test","password":"local-only example passphrase"}
+   ```
+
+   Registration does not log in. A duplicate canonical email returns 409.
+3. `POST /api/v1/auth/login`, with the same JSON, cookie and CSRF header, returns 200 and a safe account response. Postman accepts the rotated session cookie. Incorrect credentials and DISABLED accounts both return the same 401 response.
+4. Fetch `GET /api/v1/auth/csrf` again and replace `csrfToken` after login. The pre-login token is invalidated.
+5. `GET /api/v1/auth/me` returns the account from the session. It accepts no account selector; without a valid active session it returns 401.
+6. `POST /api/v1/auth/logout`, with the refreshed CSRF header and an empty body, returns 204. `GET /api/v1/auth/me` then returns 401. Fetch a new CSRF token before another registration/login.
+
+CSRF is required for **all three POST endpoints**, including anonymous registration, login and logout. Missing/invalid tokens return 403; invalid inputs return 400, and identity POST bodies over 4096 bytes return 413, including chunked requests. Error responses use `application/problem+json`. Never store sessions or credentials in localStorage.
+
+Email addresses use a documented ASCII subset with a dotted domain, at most 64 characters before `@` and 254 overall after normalization. Surrounding whitespace is stripped and case normalized with `Locale.ROOT`; dots and plus tags are preserved. V0004 also enforces a single `@`, the allowed local-part characters/dot boundaries and nonempty DNS-style labels of at most 63 characters in PostgreSQL.
+
+New passwords require 15–128 Unicode code points. Login accepts 1–128, so a correct older password below the current registration minimum still works. Both preserve spaces and reject malformed Unicode. At login, missing/null/empty passwords, excessive length, malformed Unicode and invalid email syntax return 400 before account lookup; valid input with an incorrect password, unknown email or DISABLED account returns the same 401. A wrong 1–14 character password therefore now returns 401 instead of the previous 400. CSRF 403 and request-body 413 limits are unchanged. See the [final review fixes](docs/milestones/2a-final-review-fixes.md).
+
+The cookie is HttpOnly, host-only, SameSite=Lax and path `/`. `SESSION_COOKIE_SECURE` defaults to true, with false only in the local profile for HTTP development. `SESSION_IDLE_TIMEOUT` defaults to `12h`; production SPA/API must use the same HTTPS origin. Sessions and CSRF state persist in PostgreSQL across application restarts. An account disabled after login loses access on its next protected request.
+
+**PUBLIC LAUNCH BLOCKER:** effective cross-instance controls for brute-force, credential stuffing and mass registration (including anonymous CSRF/session creation) are not implemented. Configure and verify admission/rate controls at the trusted ingress and/or a durable application mechanism, with monitoring and load testing, before public exposure. The duplicate-email 409 intentionally reveals registration status. Email verification, recovery/password reset, email changes, account deletion, MFA and administration remain future requirements. See [ADR 0003](docs/adr/0003-identity-sessions-and-security.md).
 
 ## Checks and builds
 
@@ -85,7 +114,9 @@ From `backend/`, with Docker running:
 ./mvnw --batch-mode --no-transfer-progress clean verify
 ```
 
-This compiles Java 25, runs four unit/architecture tests, packages the executable JAR, and runs two PostgreSQL Testcontainers integration tests through Failsafe. Docker absence fails the build; tests are not silently skipped. The tests verify context startup, JDBC, Flyway execution/revalidation, status/health HTTP responses and the OpenAPI contract. The exported contract is written to `backend/target/openapi.json` and compared structurally with the reviewed file. Update the checked contract deliberately with API changes.
+This compiles Java 25, runs unit/architecture tests, packages the executable JAR, and runs PostgreSQL Testcontainers integration tests through Failsafe. Docker absence fails the build; tests are not silently skipped. Tests cover domain boundaries, authentication, CSRF, cookies, JDBC sessions across application restarts/instances, concurrent registration, empty/upgrade migrations, constraints and status/health. The exported contract is written to `backend/target/openapi.json` and compared structurally with the reviewed file. Update the checked contract deliberately with API changes.
+
+Maven also runs the Identity/security Checkstyle gate during `validate` and rejects raw types during compilation. For a fast style-only check, run `./mvnw validate`. The checker does not rewrite source files. See the [quality-gate report](docs/milestones/2a-quality-gate.md) for the audit and verification on Temurin 25.0.5.
 
 From `frontend/`:
 
@@ -104,7 +135,7 @@ GitHub Actions runs backend verification on a Docker-capable Linux runner and fr
 
 Executed successfully: Maven Wrapper build/tests, frontend clean installation/typecheck/lint/build, Compose PostgreSQL startup, packaged backend startup, OpenAPI export, and a headless Edge browser check of connected/error/retry states through Vite. A temporary row and the single Flyway history entry survived backend restart plus PostgreSQL restart/container recreation; the probe table was removed afterward.
 
-The six backend tests completed with zero failures/errors/skips. Hosted GitHub Actions has not run. Browser verification tooling was temporary and is not a project dependency. No gameplay, authentication, payment integration, sessions, domain modules, final game UI or automatic deployment is included. Stop at Milestone 1.
+The paragraph above records Milestone 1 smoke checks. Milestone 2A verification and exact commands are recorded in the [implementation report](docs/milestones/2a-identity.md). Hosted GitHub Actions has not run. Browser verification tooling was temporary and is not a project dependency. No gameplay, payment integration, final game UI or automatic deployment is included. Stop at Milestone 2A; 2B and 2C require new authorization.
 
 ## Architecture documents
 
@@ -112,6 +143,7 @@ The six backend tests completed with zero failures/errors/skips. Hosted GitHub A
 - [Domain model](docs/domain-model.md): approved requirements and future aggregate rules
 - [ADR 0001](docs/adr/0001-modular-monolith.md): modular monolith decisions
 - [ADR 0002](docs/adr/0002-tech-stack.md): actual dependency/toolchain versions and compatibility evidence
+- [ADR 0003](docs/adr/0003-identity-sessions-and-security.md): Identity security, JDBC sessions and public-launch blockers
 - [Development guidelines](docs/development-guidelines.md)
 - [Agent instructions](AGENTS.md)
 
