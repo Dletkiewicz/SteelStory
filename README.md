@@ -1,6 +1,6 @@
 # Steelstory
 
-Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Gameplay and frontend authentication screens remain deferred.
+Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Milestone 2B.2 adds character creation and own-character reads. Further gameplay and frontend authentication/character screens remain deferred.
 
 ## Prerequisites
 
@@ -68,6 +68,8 @@ Stop application terminals with Ctrl+C. `docker compose stop` preserves database
 
 ## API and database
 
+REST request/response types use the `Dto` suffix and explicit web-layer mapping to application commands and safe response fields. Controllers return typed `ResponseEntity` values. Architecture tests enforce this transport boundary; reviewed JSON/OpenAPI and identity behavior are preserved. See [ADR 0004](docs/adr/0004-rest-dto-boundary.md) and the [refactoring verification report](docs/milestones/2a-dto-boundary.md).
+
 - `GET http://localhost:8080/api/v1/status` returns `{"application":"steelstory","status":"UP"}`. This verifies API connectivity; it is not a database health report.
 - `GET http://localhost:8080/actuator/health` checks application/database health without exposing details. Other Actuator endpoints are not exposed.
 - `GET http://localhost:8080/v3/api-docs` exports OpenAPI 3.1 in the local profile. The reviewed contract is [docs/api/openapi.json](docs/api/openapi.json). No Swagger UI or generated client is installed.
@@ -78,6 +80,12 @@ Flyway applies V0001 (the unchanged foundation namespace), V0002 (identity accou
 Without the local profile, `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` are required; docs are disabled and session cookies require HTTPS. Optional `FLYWAY_USERNAME`/`FLYWAY_PASSWORD` allow a separately provisioned migration role. Local development uses one role. Production role provisioning, migration release orchestration and TLS/hosting remain future work; this is not a production deployment configuration.
 
 ## Identity locally and in Postman
+
+Milestone 2B.2 also provides authenticated POST/GET /api/v1/characters and GET /api/v1/characters/{id}.
+Creation accepts name, characterClass and startingAllocation (exactly ten points above base 5), uses the same
+SESSION/CSRF flow, and enforces three characters per account plus globally unique ASCII names.
+Flyway V0005 adds character-owned tables and the transactional account guard; prior migrations remain unchanged.
+See the [character backend report](docs/milestones/2b2-character-backend.md) for JSON examples and concurrency details.
 
 Use the same Compose, backend `local` profile and Vite commands above. Existing VS Code launch settings and DBeaver connection details still apply. No React login/registration screens are included in 2A. In DBeaver, accounts are in `steelstory.identity_accounts`; session tables are framework-owned and must not be edited by application modules.
 
@@ -135,7 +143,7 @@ GitHub Actions runs backend verification on a Docker-capable Linux runner and fr
 
 Executed successfully: Maven Wrapper build/tests, frontend clean installation/typecheck/lint/build, Compose PostgreSQL startup, packaged backend startup, OpenAPI export, and a headless Edge browser check of connected/error/retry states through Vite. A temporary row and the single Flyway history entry survived backend restart plus PostgreSQL restart/container recreation; the probe table was removed afterward.
 
-The paragraph above records Milestone 1 smoke checks. Milestone 2A verification and exact commands are recorded in the [implementation report](docs/milestones/2a-identity.md). Hosted GitHub Actions has not run. Browser verification tooling was temporary and is not a project dependency. No gameplay, payment integration, final game UI or automatic deployment is included. Stop at Milestone 2A; 2B and 2C require new authorization.
+The paragraph above records Milestone 1 smoke checks. Milestone 2A verification and exact commands are recorded in the [implementation report](docs/milestones/2a-identity.md). Hosted GitHub Actions has not run. Browser verification tooling was temporary and is not a project dependency. Character creation is implemented in Milestone 2B.2; further gameplay, payment integration, final game UI and deployment remain deferred. See the [character backend report](docs/milestones/2b2-character-backend.md).
 
 ## Architecture documents
 

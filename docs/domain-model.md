@@ -1,8 +1,10 @@
 # Steelstory domain model
 
-Status: **Architecture APPROVED**, updated 2026-11-12. Milestone 2A implements the initial Account model below. The gameplay model remains conceptual; no gameplay aggregates are implemented. Approved requirements are listed explicitly; marked business proposals remain subject to review. This is not an approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
+Status: **Architecture APPROVED**, updated 2026-11-12. Milestone 2A implements the initial Account model below. Milestone 2B.2 implements PlayerCharacter creation and own-character reads; other gameplay remains conceptual. Approved requirements are listed explicitly; marked business proposals remain subject to review. This is not an approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
 
 ## Implemented Account model (Milestone 2A)
+
+HTTP requests map to separate application commands; IdentityService constructs domain values, validates password policy and creates/authenticates accounts. The web mapper projects Account into AccountResponseDto with only id, email, status and timestamps. Domain aggregates and password hashes are never HTTP response bodies. DTOs/mappers own no domain invariants, and the domain has no web dependencies. This boundary refactoring changes no Account rules; see [ADR 0004](adr/0004-rest-dto-boundary.md).
 
 Identity owns an immutable Account with UUID AccountId, canonical EmailAddress, redacted Argon2id PasswordHash, ACTIVE/DISABLED status and UTC createdAt/updatedAt. Registration creates ACTIVE accounts, with equal creation/update instants; reconstitution rejects an update before creation. There are no arbitrary setters, roles, wallets or character references. DISABLED accounts cannot authenticate or continue using protected APIs.
 
@@ -49,7 +51,9 @@ IDs are opaque and immutable, preferably UUIDs generated without central allocat
 
 ## Character and progression
 
-A character belongs to exactly one account, and an account may own multiple characters. The model must not enforce permanent uniqueness of the character's account reference. Initial total/active character limits are product policy, not cardinality. If a cap is introduced, concurrent creation must acquire the account guard through `identity::api`, then count/create through character-owned persistence in one transaction. Identity never queries character tables. Character selection is request/UI context; every acting character must be reauthorized against the authenticated account. A single selected-character field does not define account ownership.
+Milestone 2B.2 implements immutable PlayerCharacter, CharacterId, CharacterName, CharacterClass, StartingAllocation and CharacterAttributes. Names are ASCII 3?20 with single internal spaces and global case-insensitive uniqueness. Exactly ten nonnegative allocation points produce base-5 starting attributes; trained bonuses are persisted separately at zero. Creation sets level 1, experience 0 and unspent training points 0. No progression, training, respec or deletion operations exist. See [implementation report](milestones/2b2-character-backend.md).
+
+A character belongs to exactly one account, and an account may own multiple characters. The model must not enforce permanent uniqueness of the character's account reference. Initial total/active character limits are product policy, not cardinality. The approved creation cap is three. Creation locks a character-owned account guard and counts/inserts in one transaction; active-account eligibility uses `identity::api`. Identity never queries character tables. Character selection is request/UI context; every acting character must be reauthorized against the authenticated account. A single selected-character field does not define account ownership.
 
 Permanent class is set at creation and has no mutation operation. A privileged support interface must not accidentally create a class-change bypass.
 

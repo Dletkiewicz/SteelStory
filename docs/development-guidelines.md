@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Architecture APPROVED; Milestone 2A: Identity authorized, 2026-11-12. These conventions govern implementation. Marked business proposals remain pending; characters, gameplay and frontend authentication screens are outside this milestone.
+Status: Architecture APPROVED; Milestone 2B.2 character creation backend authorized. Later gameplay and frontend work remain outside scope.
 
 ## Work in small domain slices
 
@@ -24,7 +24,7 @@ Keep models at their owning boundary:
 
 | Kind | Package convention | Example |
 | --- | --- | --- |
-| Foundation HTTP DTO | `com.steelstory.bootstrap.web.dto` | `StatusResponse.java` |
+| Foundation HTTP DTO | `com.steelstory.bootstrap.web.dto` | `StatusResponseDto.java` |
 | Domain module HTTP DTO | `com.steelstory.<module>.internal.web.dto` | A request/response used by that module's controller |
 | Exported module API value | `com.steelstory.<module>.api.dto`, when a DTO subpackage is useful | An immutable command/result deliberately exposed through the named API |
 
@@ -32,7 +32,13 @@ HTTP visibility is different from module visibility. A public HTTP DTO in `inter
 
 Prefer a record for a simple immutable request/response. Use an ordinary class when mutable state, lifecycle, identity or mapping requirements make it appropriate. Records are not an automatic choice for domain objects or persistence entities. A record containing a mutable collection still needs defensive copying when immutability is required.
 
-`StatusResponse` is the reference example: a standalone record in `bootstrap.web.dto`, imported by `StatusController`. It retains the two required fields and their allowed values. The controller can directly construct this constant connectivity response; no service or interface is necessary.
+`StatusResponseDto` is the reference example: a standalone record in `bootstrap.web.dto`, imported by `StatusController`. It retains the two required fields and their allowed values. The controller can directly construct this constant connectivity response; no service or interface is necessary.
+
+REST is a strict transport boundary. All project-owned HTTP model names end in `Dto`. Request bodies use `RequestDto` types; controllers return `ResponseEntity<ResponseDto>`, with `ResponseEntity<Void>` for a bodyless 204. Framework-injected servlet, authentication and CSRF arguments remain transport infrastructure, not JSON request models.
+
+Map requests explicitly to application commands or domain values before calling application services. Map application results/domain aggregates explicitly to response DTOs before returning HTTP JSON. Keep these simple mappers in the owning web package; DTO records contain transport fields and documentation only. Application/domain services must never accept or return HTTP DTOs, and domain classes must never depend on web classes. Aggregate creation and business operations stay in application/domain code. Domain objects retain their invariants; mappers never duplicate validation rules.
+
+Identity registration uses `IdentityDtoMapper` to create `RegisterAccountCommand`. Login maps its HTTP DTO to Spring's standard authentication token; `AccountAuthenticationProvider` converts that token into `AuthenticateAccountCommand` before invoking the application service. Session rotation and persistence remain in the web session adapter. Password-bearing commands, request DTOs and CSRF responses redact `toString`. Explicit handwritten mappings need no mapping framework or annotation processor at this size. See [ADR 0004](adr/0004-rest-dto-boundary.md).
 
 ### Responsibilities and dependencies
 
@@ -54,7 +60,7 @@ This is a future-feature illustration, not authorization to create that module. 
 
 Use four spaces for indentation and blank lines between methods. Keep lines within 120 characters where practical; wrap long signatures, calls and annotations rather than compressing them. Put multiline annotation arguments on separate lines and keep method bodies expanded. Use imports instead of fully qualified class names in code, except when resolving a genuine name collision; prefer explicit imports over wildcards.
 
-Choose names that explain purpose, such as `StatusResponse`, `ExpeditionService` and `findActiveExpedition`. Avoid unqualified names such as `Data`, `Helper` or `Manager`; a name like `ApiExceptionHandler` is appropriate when exception handling is its specific responsibility. Name variables for their meaning rather than shortening them unnecessarily.
+Choose names that explain purpose, such as `StatusResponseDto`, `ExpeditionService` and `findActiveExpedition`. Avoid unqualified names such as `Data`, `Helper` or `Manager`; a name like `ApiExceptionHandler` is appropriate when exception handling is its specific responsibility. Name variables for their meaning rather than shortening them unnecessarily.
 
 Prefer straightforward conditionals and loops when they are easier to debug than chained streams. Use Optional for a meaningful absence contract, not as a replacement for every conditional. Introduce generics or design patterns only for an actual reusable relationship. Modern syntax is useful when the result is clearer, not merely shorter.
 
@@ -75,9 +81,9 @@ package com.steelstory.identity.api;
 import org.springframework.modulith.NamedInterface;
 ```
 
-### Selective Lombok policy
+### No Lombok
 
-Lombok is permitted when it removes meaningful repetitive work, not merely a few lines of correct constructors. Before adopting it, verify the chosen version with Java 25 and Maven, configure annotation processing explicitly, and run the build/tests. `@RequiredArgsConstructor` may replace a constructor that only assigns required final dependencies; `@Slf4j` may provide a logger in a class that logs. Keep constructors with validation or collaborator initialization explicit. Do not use `@Data`, generated domain setters or speculative `@Builder`; never replace behavior with generated accessors. A record remains preferable for a simple immutable DTO. No Lombok dependency or processor is installed in 2A.
+Do not use Lombok. Use Java records for immutable DTOs and explicit constructors/accessors where appropriate. No Lombok dependency or annotation processor is installed.
 
 ### Automated Java quality checks
 
@@ -89,7 +95,7 @@ Meaningful dependency names, logical-stage blank lines, exception-message safety
 
 ### OpenAPI and refactoring compatibility
 
-Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponse`; do not remove contract metadata to reduce visual clutter.
+Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponseDto`; do not remove contract metadata to reduce visual clutter. A type-level `@Schema(name = "...")` deliberately retains existing public schema names when a Java DTO is renamed.
 
 A style refactoring must preserve endpoint paths, HTTP methods/status codes, content types, JSON fields and generated OpenAPI schemas. Run existing HTTP tests and the integration contract comparison. Do not regenerate the checked contract to conceal a changed schema. Tests need editing only when they depend on the relocated Java type or when a behavioral coverage gap matters; do not add tests for file placement or record accessors.
 
@@ -191,7 +197,7 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2A; do not begin 2B, 2C or gameplay automatically.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2B.2 creation/list/get; later features require separate authorization.
 
 ## Identity security conventions
 

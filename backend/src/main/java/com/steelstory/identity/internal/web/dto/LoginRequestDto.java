@@ -2,7 +2,8 @@ package com.steelstory.identity.internal.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public record LoginRequest(
+@Schema(name = "LoginRequest")
+public record LoginRequestDto(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 320,
                 description = "ASCII email; surrounding whitespace stripped, canonical lowercase; "
                         + "max 254 after normalization.")
@@ -15,6 +16,6 @@ public record LoginRequest(
 ) {
     @Override
     public String toString() {
-        return "LoginRequest[REDACTED]";
+        return "LoginRequestDto[REDACTED]";
     }
 }

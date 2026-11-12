@@ -66,7 +66,7 @@
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
           <includeResources>false</includeResources>
           <includeTestResources>false</includeTestResources>
-          <includes>com/steelstory/identity/**/*.java,com/steelstory/bootstrap/security/**/*.java</includes>
+          <includes>com/steelstory/identity/**/*.java,com/steelstory/character/**/*.java,com/steelstory/bootstrap/security/**/*.java</includes>
           <consoleOutput>true</consoleOutput>
         </configuration>
         <executions>

@@ -44,10 +44,10 @@ class FoundationIT {
     @Test
     void contextStartsAgainstPostgresAndMigrationsAreRepeatable() {
         assertThat(jdbc.queryForObject("select count(*) from information_schema.schemata where schema_name = 'steelstory'", Integer.class)).isEqualTo(1);
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0004");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0005");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(4);
+        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(5);
     }
 
     @Test
@@ -69,6 +69,12 @@ class FoundationIT {
         Files.createDirectories(Path.of("target"));
         Files.writeString(Path.of("target/openapi.json"), contract);
         JsonMapper mapper = JsonMapper.builder().build();
+        for (String attribute : new String[] {"strength", "dexterity", "intelligence", "constitution", "luck"}) {
+            assertThat(mapper.readTree(contract).path("components").path("schemas")
+                    .path("StartingAllocationRequestDto").path("properties").path(attribute).path("type").asString())
+                    .isEqualTo("integer");
+        }
+
         assertThat(mapper.readTree(contract)).isEqualTo(
                 mapper.readTree(Files.readString(Path.of("../docs/api/openapi.json"))));
     }

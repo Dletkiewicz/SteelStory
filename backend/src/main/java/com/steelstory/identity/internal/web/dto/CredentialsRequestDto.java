@@ -2,7 +2,8 @@ package com.steelstory.identity.internal.web.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 
-public record CredentialsRequest(
+@Schema(name = "CredentialsRequest")
+public record CredentialsRequestDto(
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, maxLength = 320,
                 description = "ASCII email; surrounding whitespace stripped, canonical lowercase; "
                         + "max 254 after normalization.")
@@ -14,6 +15,6 @@ public record CredentialsRequest(
 ) {
     @Override
     public String toString() {
-        return "CredentialsRequest[REDACTED]";
+        return "CredentialsRequestDto[REDACTED]";
     }
 }

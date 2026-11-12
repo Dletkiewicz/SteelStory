@@ -10,6 +10,125 @@
     }
   ],
   "paths": {
+    "/api/v1/characters": {
+      "get": {
+        "tags": [
+          "character-controller"
+        ],
+        "summary": "List owned characters in creation order",
+        "operationId": "listOwnCharacters",
+        "responses": {
+          "200": {
+            "description": "Owned characters ordered by creation time, then ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required; account must be active",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "character-controller"
+        ],
+        "summary": "Create an owned character",
+        "description": "Distribute exactly 10 points above base 5. At most 3 characters per account.",
+        "operationId": "createCharacter",
+        "parameters": [
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "description": "Token from getCsrfToken",
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCharacterRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Character created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid name, class or starting allocation",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required; account must be active",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Name taken or character limit reached",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/register": {
       "post": {
         "tags": [
@@ -274,6 +393,73 @@
         }
       }
     },
+    "/api/v1/characters/{id}": {
+      "get": {
+        "tags": [
+          "character-controller"
+        ],
+        "summary": "Get an owned character",
+        "operationId": "getOwnCharacter",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Owned character",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid character ID",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required; account must be active",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown or unowned character",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      }
+    },
     "/api/v1/auth/me": {
       "get": {
         "tags": [
@@ -385,6 +571,202 @@
   },
   "components": {
     "schemas": {
+      "CreateCharacterRequestDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 3,
+            "pattern": "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$"
+          },
+          "characterClass": {
+            "type": "string",
+            "enum": [
+              "WARRIOR",
+              "ARCHER",
+              "MAGE"
+            ]
+          },
+          "startingAllocation": {
+            "$ref": "#/components/schemas/StartingAllocationRequestDto",
+            "description": "Nonnegative integer points summing to 10."
+          }
+        },
+        "required": [
+          "characterClass",
+          "name",
+          "startingAllocation"
+        ]
+      },
+      "StartingAllocationRequestDto": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "dexterity": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "intelligence": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "constitution": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "luck": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "constitution",
+          "dexterity",
+          "intelligence",
+          "luck",
+          "strength"
+        ]
+      },
+      "CharacterProblemResponseDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "detail": {
+            "type": "string"
+          },
+          "instance": {
+            "type": "string",
+            "format": "uri"
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "detail",
+          "instance",
+          "status",
+          "title",
+          "type"
+        ]
+      },
+      "CharacterAttributesResponseDto": {
+        "type": "object",
+        "properties": {
+          "strength": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "dexterity": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "intelligence": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "constitution": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "luck": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "constitution",
+          "dexterity",
+          "intelligence",
+          "luck",
+          "strength"
+        ]
+      },
+      "CharacterResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "characterClass": {
+            "type": "string",
+            "enum": [
+              "WARRIOR",
+              "ARCHER",
+              "MAGE"
+            ]
+          },
+          "level": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 1
+          },
+          "experience": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "unspentTrainingPoints": {
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          "startingAttributes": {
+            "$ref": "#/components/schemas/CharacterAttributesResponseDto"
+          },
+          "trainedAttributes": {
+            "$ref": "#/components/schemas/CharacterAttributesResponseDto"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "characterClass",
+          "createdAt",
+          "experience",
+          "id",
+          "level",
+          "name",
+          "startingAttributes",
+          "trainedAttributes",
+          "unspentTrainingPoints",
+          "updatedAt"
+        ]
+      },
       "CredentialsRequest": {
         "type": "object",
         "properties": {
@@ -475,6 +857,27 @@
           "updatedAt"
         ]
       },
+      "LoginRequest": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "ASCII email; surrounding whitespace stripped, canonical lowercase; max 254 after normalization.",
+            "maxLength": 320
+          },
+          "password": {
+            "type": "string",
+            "description": "1–128 Unicode code points, preserved exactly; no trimming or normalization. The minimum length for new passwords does not apply to login.",
+            "maxLength": 128,
+            "minLength": 1,
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
       "StatusResponse": {
         "type": "object",
         "properties": {
@@ -496,6 +899,20 @@
           "status"
         ]
       },
+      "CharacterListResponseDto": {
+        "type": "object",
+        "properties": {
+          "characters": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CharacterResponseDto"
+            }
+          }
+        },
+        "required": [
+          "characters"
+        ]
+      },
       "CsrfResponse": {
         "type": "object",
         "properties": {
@@ -512,27 +929,6 @@
         "required": [
           "headerName",
           "token"
-        ]
-      },
-      "LoginRequest": {
-        "type": "object",
-        "properties": {
-          "email": {
-            "type": "string",
-            "description": "ASCII email; surrounding whitespace stripped, canonical lowercase; max 254 after normalization.",
-            "maxLength": 320
-          },
-          "password": {
-            "type": "string",
-            "description": "1–128 Unicode code points, preserved exactly; no trimming or normalization. The minimum length for new passwords does not apply to login.",
-            "maxLength": 128,
-            "minLength": 1,
-            "writeOnly": true
-          }
-        },
-        "required": [
-          "email",
-          "password"
         ]
       }
     },

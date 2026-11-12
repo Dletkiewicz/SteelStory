@@ -6,6 +6,7 @@ import com.steelstory.identity.api.AccountId;
 import com.steelstory.identity.internal.application.AccountRepository;
 import com.steelstory.identity.internal.application.IdentityService;
 import com.steelstory.identity.internal.application.PasswordHashing;
+import com.steelstory.identity.internal.application.RegisterAccountCommand;
 import com.steelstory.identity.internal.domain.Account;
 import com.steelstory.identity.internal.domain.EmailAddress;
 import com.steelstory.identity.internal.domain.PasswordHash;
@@ -97,7 +98,7 @@ class IdentityIT {
 
         IdentityService identityService = new IdentityService(
                 observingAccountRepository, observingPasswordHashing, clock, platformTransactionManager);
-        Account account = identityService.register(email(), PASSWORD);
+        Account account = identityService.register(new RegisterAccountCommand(email(), PASSWORD));
 
         assertThat(TransactionSynchronizationManager.isActualTransactionActive()).isFalse();
         assertThat(accountRepository.findById(account.id())).isPresent();
@@ -114,14 +115,14 @@ class IdentityIT {
         String email = email();
         IdentityService failingIdentityService = new IdentityService(
                 failingAccountRepository, passwordHashing, clock, platformTransactionManager);
-        assertThatThrownBy(() -> failingIdentityService.register(email, PASSWORD))
+        assertThatThrownBy(() -> failingIdentityService.register(new RegisterAccountCommand(email, PASSWORD)))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT count(*) FROM steelstory.identity_accounts WHERE email = ?", Integer.class, email)).isZero();
 
         IdentityService identityService = new IdentityService(
                 accountRepository, passwordHashing, clock, platformTransactionManager);
-        Account account = identityService.register(email, PASSWORD);
+        Account account = identityService.register(new RegisterAccountCommand(email, PASSWORD));
 
         assertThat(accountRepository.findById(account.id())).isPresent();
     }
