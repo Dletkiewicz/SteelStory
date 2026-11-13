@@ -1,5 +1,6 @@
 package com.steelstory.identity.internal.infrastructure;
 
+import com.steelstory.identity.internal.application.AuthenticateAccountCommand;
 import com.steelstory.identity.internal.application.IdentityService;
 import com.steelstory.identity.internal.application.InvalidCredentialsException;
 import com.steelstory.identity.internal.domain.Account;
@@ -21,8 +22,9 @@ public class AccountAuthenticationProvider implements AuthenticationProvider {
     @Override
     public Authentication authenticate(Authentication authentication) {
         try {
-            Account account = identityService.authenticate(
+            AuthenticateAccountCommand command = new AuthenticateAccountCommand(
                     authentication.getName(), (String) authentication.getCredentials());
+            Account account = identityService.authenticate(command);
 
             // Persist only a stable account UUID, no credentials, email or domain aggregate.
             return UsernamePasswordAuthenticationToken.authenticated(

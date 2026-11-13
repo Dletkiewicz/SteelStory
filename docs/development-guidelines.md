@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Architecture APPROVED; Milestone 2A: Identity authorized, 2026-11-12. These conventions govern implementation. Marked business proposals remain pending; characters, gameplay and frontend authentication screens are outside this milestone.
+Status: Architecture APPROVED; Milestone 2B.2 and the Milestone 2B.3 frontend are complete. Owner-confirmed soft deletion and the class/gender portrait rework are authorized, including cosmetic appearance persistence. Milestone 3A also authorizes XP/level progression and explicitly enabled local testing; later gameplay remains outside scope.
 
 ## Work in small domain slices
 
@@ -24,7 +24,7 @@ Keep models at their owning boundary:
 
 | Kind | Package convention | Example |
 | --- | --- | --- |
-| Foundation HTTP DTO | `com.steelstory.bootstrap.web.dto` | `StatusResponse.java` |
+| Foundation HTTP DTO | `com.steelstory.bootstrap.web.dto` | `StatusResponseDto.java` |
 | Domain module HTTP DTO | `com.steelstory.<module>.internal.web.dto` | A request/response used by that module's controller |
 | Exported module API value | `com.steelstory.<module>.api.dto`, when a DTO subpackage is useful | An immutable command/result deliberately exposed through the named API |
 
@@ -32,7 +32,13 @@ HTTP visibility is different from module visibility. A public HTTP DTO in `inter
 
 Prefer a record for a simple immutable request/response. Use an ordinary class when mutable state, lifecycle, identity or mapping requirements make it appropriate. Records are not an automatic choice for domain objects or persistence entities. A record containing a mutable collection still needs defensive copying when immutability is required.
 
-`StatusResponse` is the reference example: a standalone record in `bootstrap.web.dto`, imported by `StatusController`. It retains the two required fields and their allowed values. The controller can directly construct this constant connectivity response; no service or interface is necessary.
+`StatusResponseDto` is the reference example: a standalone record in `bootstrap.web.dto`, imported by `StatusController`. It retains the two required fields and their allowed values. The controller can directly construct this constant connectivity response; no service or interface is necessary.
+
+REST is a strict transport boundary. All project-owned HTTP model names end in `Dto`. Request bodies use `RequestDto` types; controllers return `ResponseEntity<ResponseDto>`, with `ResponseEntity<Void>` for a bodyless 204. Framework-injected servlet, authentication and CSRF arguments remain transport infrastructure, not JSON request models.
+
+Map requests explicitly to application commands or domain values before calling application services. Map application results/domain aggregates explicitly to response DTOs before returning HTTP JSON. Keep these simple mappers in the owning web package; DTO records contain transport fields and documentation only. Application/domain services must never accept or return HTTP DTOs, and domain classes must never depend on web classes. Aggregate creation and business operations stay in application/domain code. Domain objects retain their invariants; mappers never duplicate validation rules.
+
+Identity registration uses `IdentityDtoMapper` to create `RegisterAccountCommand`. Login maps its HTTP DTO to Spring's standard authentication token; `AccountAuthenticationProvider` converts that token into `AuthenticateAccountCommand` before invoking the application service. Session rotation and persistence remain in the web session adapter. Password-bearing commands, request DTOs and CSRF responses redact `toString`. Explicit handwritten mappings need no mapping framework or annotation processor at this size. See [ADR 0004](adr/0004-rest-dto-boundary.md).
 
 ### Responsibilities and dependencies
 
@@ -54,7 +60,7 @@ This is a future-feature illustration, not authorization to create that module. 
 
 Use four spaces for indentation and blank lines between methods. Keep lines within 120 characters where practical; wrap long signatures, calls and annotations rather than compressing them. Put multiline annotation arguments on separate lines and keep method bodies expanded. Use imports instead of fully qualified class names in code, except when resolving a genuine name collision; prefer explicit imports over wildcards.
 
-Choose names that explain purpose, such as `StatusResponse`, `ExpeditionService` and `findActiveExpedition`. Avoid unqualified names such as `Data`, `Helper` or `Manager`; a name like `ApiExceptionHandler` is appropriate when exception handling is its specific responsibility. Name variables for their meaning rather than shortening them unnecessarily.
+Choose names that explain purpose, such as `StatusResponseDto`, `ExpeditionService` and `findActiveExpedition`. Avoid unqualified names such as `Data`, `Helper` or `Manager`; a name like `ApiExceptionHandler` is appropriate when exception handling is its specific responsibility. Name variables for their meaning rather than shortening them unnecessarily.
 
 Prefer straightforward conditionals and loops when they are easier to debug than chained streams. Use Optional for a meaningful absence contract, not as a replacement for every conditional. Introduce generics or design patterns only for an actual reusable relationship. Modern syntax is useful when the result is clearer, not merely shorter.
 
@@ -75,9 +81,9 @@ package com.steelstory.identity.api;
 import org.springframework.modulith.NamedInterface;
 ```
 
-### Selective Lombok policy
+### No Lombok
 
-Lombok is permitted when it removes meaningful repetitive work, not merely a few lines of correct constructors. Before adopting it, verify the chosen version with Java 25 and Maven, configure annotation processing explicitly, and run the build/tests. `@RequiredArgsConstructor` may replace a constructor that only assigns required final dependencies; `@Slf4j` may provide a logger in a class that logs. Keep constructors with validation or collaborator initialization explicit. Do not use `@Data`, generated domain setters or speculative `@Builder`; never replace behavior with generated accessors. A record remains preferable for a simple immutable DTO. No Lombok dependency or processor is installed in 2A.
+Do not use Lombok. Use Java records for immutable DTOs and explicit constructors/accessors where appropriate. No Lombok dependency or annotation processor is installed.
 
 ### Automated Java quality checks
 
@@ -89,7 +95,7 @@ Meaningful dependency names, logical-stage blank lines, exception-message safety
 
 ### OpenAPI and refactoring compatibility
 
-Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponse`; do not remove contract metadata to reduce visual clutter.
+Keep stable `operationId`, required properties and important constraints such as the status response's allowed values. Avoid annotations that merely repeat information already inferred correctly. Long annotations should be formatted as in `StatusController` and `StatusResponseDto`; do not remove contract metadata to reduce visual clutter. A type-level `@Schema(name = "...")` deliberately retains existing public schema names when a Java DTO is renamed.
 
 A style refactoring must preserve endpoint paths, HTTP methods/status codes, content types, JSON fields and generated OpenAPI schemas. Run existing HTTP tests and the integration contract comparison. Do not regenerate the checked contract to conceal a changed schema. Tests need editing only when they depend on the relocated Java type or when a behavioral coverage gap matters; do not add tests for file placement or record accessors.
 
@@ -159,9 +165,15 @@ Avoid trivial tests that repeat implementation details or assert only getters/se
 
 Organize React features around player tasks, with a small shared UI layer and a central typed API adapter. Use strict TypeScript, explicit loading/error/conflict states, accessible controls and stable server contracts. Do not mirror backend business authority in a second frontend rules engine.
 
+The implemented frontend uses `src/api` for handwritten contracts, fetch/CSRF handling and safe Polish errors; `src/auth` for session state and forms; `src/characters` for selection, creation and profiles; and `src/ui` for the shared frame, feedback and original SVG emblems. `App.tsx` composes these features. Hash routes preserve profile navigation without a router dependency or backend session field. Fetch uses relative `/api/v1` URLs through the existing Vite proxy. Cookies remain browser-managed; CSRF is memory-only and refreshed after login. No POST is automatically replayed. A lost creation response requires checking the authoritative list before another attempt. Use only safe mapped errors in UI, never raw server details.
+
+Frontend tests use Node 24's built-in TypeScript stripping/test runner for pure rules and client lifecycle, and pinned Playwright for browser behavior. Run `npm test`, `npm run test:ui` and `npm run test:e2e` as described in the [2B.3 guide](milestones/2b3-character-frontend.md). UI failure fixtures are confined to tests; the production bundle always uses real API calls. Browser integration tests require a running backend and PostgreSQL and deliberately retain synthetic records. CI runs unit and fixture-based UI tests; the real-stack browser flow is locally verified. Never capture authentication traces with real users.
+
 Keep money/large counters as decimal strings at the JSON boundary. Show server-provided outcomes and deadlines; client countdowns are estimates. For retried commands preserve the original idempotency key and payload. On conflict, refresh authoritative state rather than silently replaying with a new key. Never optimistically display a premium purchase or irreversible inventory transfer as completed before server confirmation.
 
 Keep authentication cookies out of JavaScript, send CSRF tokens correctly, and treat all frontend configuration as public. Do not render untrusted HTML. Start with ordinary requests and polling; add transport/state libraries when they solve an existing problem.
+
+The character API client attaches CSRF to DELETE as well as POST. Never automatically replay deletion after an uncertain response; check the authoritative detail/list first. Use the themed exact-name modal, not `confirm()`. Native modal focus/inert behavior and focus restoration are covered by browser tests. Active reads/cap checks must consistently exclude deleted rows, while name uniqueness must include them. See [ADR 0005](adr/0005-character-soft-deletion.md). Original portrait files and exact generation prompts are documented in [current portrait direction and prompts](art/portrait-system-rework.md); register only shipped tiers for each class/gender pair in `portraits.ts` so missing tiers fall back within the same appearance without broken image requests. New assets use 3:4 framing and local WebP files. Keep tier 1 available for every pair. The creation UI sends explicit appearanceGender; preserve the documented omitted/null compatibility default at the backend boundary and verify migration history plus saved appearance after reload. See [ADR 0006](adr/0006-character-appearance.md).
 
 ### OpenAPI contract workflow
 
@@ -191,7 +203,7 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2A; do not begin 2B, 2C or gameplay automatically.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 3A XP/level progression; later gameplay features require separate authorization.
 
 ## Identity security conventions
 
@@ -206,3 +218,24 @@ IdentityService retains TransactionTemplate because the transaction should begin
 Do not log request bodies, hashes, cookies, CSRF tokens or rejected database rows. Sensitive request/hash/CSRF values have redacted toString methods; unexpected-error logging records exception class only because driver/parser messages may contain data. Do not enable JDBC bind-parameter or HTTP body/header trace logging with real users. Authentication tests use synthetic data.
 
 Document real flattened ProblemDetail JSON, explicit CSRF headers and cookie authentication. Hide framework-injected arguments from OpenAPI. Review the old endpoint/schema nodes before accepting a newly exported snapshot.
+
+## Milestone 3A progression discipline
+
+Keep the provisional XP formula exclusively in `ExperienceCurve`. All character
+progression writes go through the immutable aggregate and transactional trusted
+application use case. Lock account guard before character row, including deletion;
+never add an unlocked read/modify/write path. A row lock prevents lost updates,
+not duplicate event delivery. Add deduplication only with a real authoritative
+reward source and its permanent event identity, in the same transaction as XP.
+
+The local XP controller requires both `local` and `steelstory.dev.xp.enabled=true`;
+missing property means disabled. Preserve session, active-account, owner and CSRF
+checks. The Vite panel requires DEV, `VITE_DEV_XP_ENABLED=true` and a loopback host.
+Its dynamic import must disappear from production output; `npm run build` checks
+that the panel/endpoint strings are absent. No production bundle or player API may
+supply arbitrary XP. Never automatically replay an uncertain award.
+
+Browser tests run a normal Vite server on 5173 and an explicitly enabled test
+server on 5174. The real-backend E2E suite requires the backend local XP opt-in;
+see [Milestone 3A commands](milestones/3a-character-progression.md). Use Edge via
+`PLAYWRIGHT_CHANNEL=msedge` on Windows or the installed Playwright Chromium in CI.

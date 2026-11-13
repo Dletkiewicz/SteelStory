@@ -1,8 +1,10 @@
 # Steelstory domain model
 
-Status: **Architecture APPROVED**, updated 2026-11-12. Milestone 2A implements the initial Account model below. The gameplay model remains conceptual; no gameplay aggregates are implemented. Approved requirements are listed explicitly; marked business proposals remain subject to review. This is not an approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
+Status: **Architecture APPROVED**, updated 2026-11-12. Milestone 2A implements the initial Account model below. Milestone 2B.2 implements PlayerCharacter creation and own-character reads; other gameplay remains conceptual. Approved requirements are listed explicitly; marked business proposals remain subject to review. This is not an approved game balance specification. Module dependencies are defined in [architecture](architecture.md).
 
 ## Implemented Account model (Milestone 2A)
+
+HTTP requests map to separate application commands; IdentityService constructs domain values, validates password policy and creates/authenticates accounts. The web mapper projects Account into AccountResponseDto with only id, email, status and timestamps. Domain aggregates and password hashes are never HTTP response bodies. DTOs/mappers own no domain invariants, and the domain has no web dependencies. This boundary refactoring changes no Account rules; see [ADR 0004](adr/0004-rest-dto-boundary.md).
 
 Identity owns an immutable Account with UUID AccountId, canonical EmailAddress, redacted Argon2id PasswordHash, ACTIVE/DISABLED status and UTC createdAt/updatedAt. Registration creates ACTIVE accounts, with equal creation/update instants; reconstitution rejects an update before creation. There are no arbitrary setters, roles, wallets or character references. DISABLED accounts cannot authenticate or continue using protected APIs.
 
@@ -49,7 +51,42 @@ IDs are opaque and immutable, preferably UUIDs generated without central allocat
 
 ## Character and progression
 
-A character belongs to exactly one account, and an account may own multiple characters. The model must not enforce permanent uniqueness of the character's account reference. Initial total/active character limits are product policy, not cardinality. If a cap is introduced, concurrent creation must acquire the account guard through `identity::api`, then count/create through character-owned persistence in one transaction. Identity never queries character tables. Character selection is request/UI context; every acting character must be reauthorized against the authenticated account. A single selected-character field does not define account ownership.
+Milestone 3A implements total lifetime XP using a **provisional development curve**:
+advancing from L to L+1 requires `100 * L * L` XP. `ExperienceCurve` is the single
+policy; cumulative thresholds sum those incremental costs. Level 200 begins at
+264,670,000 total XP. Awards saturate at that cap without overflow, including
+`Long.MAX_VALUE` rewards. At the cap, XP, level, points and updatedAt do not change.
+Every completed level-up grants three unspent training points, up to 597 earned
+by level 200. Starting allocation and trained bonuses are preserved. Points cannot
+yet be spent. No individual attribute cap is introduced.
+
+`PlayerCharacter.gainExperience(amount, now)` returns an immutable updated character,
+rejecting nonpositive rewards, deleted characters and backdated updates. Restoration
+requires consistent total XP/level, bounded XP and nonnegative unspent points no
+greater than level-up earnings. Bad stored state fails validation rather than being
+silently reset. The existing columns suffice; this milestone adds no migration.
+
+`CharacterService.awardExperience` is a trusted internal application use case.
+The transaction locks the character-owned account guard, validates account
+eligibility through Identity, then loads the active owned character FOR UPDATE,
+applies the domain operation and saves progression. Deletion uses the same order.
+Independent concurrent rewards accumulate; replaying a reward is a new award,
+not an idempotent event delivery. Future authoritative event sources need permanent
+unique reward identities and atomic deduplication. See
+[ADR 0007](adr/0007-character-progression.md).
+
+
+The separately authorized deletion/portraits step adds immutable `PlayerCharacter.delete(now)` and nullable internal `deletedAt`. Deletion is owner-only, irreversible through player APIs, and shares creation's account guard transaction. Only active rows (`deleted_at IS NULL`) count toward three slots or appear in list/detail. Deleted rows remain stored, their names remain reserved under the existing global constraint, and repeated deletion returns 404. The earlier email-confirmation proposal is deferred for this in-app flow; no delivery or recovery is implemented. See [ADR 0005](adr/0005-character-soft-deletion.md).
+
+The portrait rework adds immutable character-owned `AppearanceGender` (MALE/FEMALE), selected at creation and persisted independently of class. It has no attribute or eligibility effect and no update endpoint. V0007 backfills existing active and deleted characters with their prior class portrait appearance: female archers, male warriors/mages. Older creation requests with omitted/null appearance use the same defaults; invalid values are rejected. See [ADR 0006](adr/0006-character-appearance.md).
+
+Portrait tiers are frontend presentation only: `ceil(level / 20)`, bounded to 1–10. Only original tier-one images ship; absent tiers use the latest earlier available portrait within the same class and gender. Six original tier-one WebP assets cover every combination. Portraits remain visual only and grant no attribute, equipment or combat bonuses. Milestone 3A separately implements the progression rules below.
+
+Milestone 2B.3 adds presentation of the implemented creation rules in the browser: three slots, class selection, base 5 plus ten allocated bonuses, and a read-only character sheet. The sheet displays `startingAttributes + trainedAttributes` as permanent totals. It introduces no new domain rules, class bonuses, progression formulas or equipment values. All ownership and mutation decisions remain authoritative in the backend.
+
+Milestone 2B.2 implements immutable PlayerCharacter, CharacterId, CharacterName, CharacterClass, StartingAllocation and CharacterAttributes. Names are ASCII 3?20 with single internal spaces and global case-insensitive uniqueness. Exactly ten nonnegative allocation points produce base-5 starting attributes; trained bonuses are persisted separately at zero. Creation sets level 1, experience 0 and unspent training points 0. Milestone 3A extends this initial state with XP awarding; training-point spending and respec do not exist. See [implementation report](milestones/2b2-character-backend.md).
+
+A character belongs to exactly one account, and an account may own multiple characters. The model must not enforce permanent uniqueness of the character's account reference. Initial total/active character limits are product policy, not cardinality. The approved creation cap is three. Creation locks a character-owned account guard and counts/inserts in one transaction; active-account eligibility uses `identity::api`. Identity never queries character tables. Character selection is request/UI context; every acting character must be reauthorized against the authenticated account. A single selected-character field does not define account ownership.
 
 Permanent class is set at creation and has no mutation operation. A privileged support interface must not accidentally create a class-change bypass.
 

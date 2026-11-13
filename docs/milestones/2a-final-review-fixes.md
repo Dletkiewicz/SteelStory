@@ -6,6 +6,11 @@ Status: **READY TO COMMIT**, 2026-11-12. This status covers the two requested co
 
 PasswordPolicy now exposes separate validateNewPassword and validateLoginInput methods. Registration still requires 15–128 Unicode code points. Login accepts nonempty passwords of 1–128 code points independently of the new-password minimum. Both retain the raw UTF-16 upper bound, malformed-surrogate rejection and exact password preservation. Argon2id parameters, encoder implementation and encoded hash format did not change.
 
+docker compose exec -T postgres psql -X -A -t `
+    -U steelstory_local `
+    -d steelstory `
+    -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+
 With valid CSRF and an in-limit request body, login semantics are:
 
 | Input/result | HTTP behavior |

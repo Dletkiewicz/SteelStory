@@ -38,6 +38,8 @@ class ApiWebTest {
     @RestController
     static class FailureController {
         @GetMapping("/test/failure")
-        String fail() { throw new IllegalStateException("private database detail"); }
+        String fail() {
+             throw new IllegalStateException("private database detail"); 
+            }
     }
 }

@@ -29,11 +29,11 @@ public class IdentityService implements AccountAccess {
         this.transactionTemplate = new TransactionTemplate(platformTransactionManager);
     }
 
-    public Account register(String email, String password) {
-        EmailAddress emailAddress = new EmailAddress(email);
-        PasswordPolicy.validateNewPassword(password);
+    public Account register(RegisterAccountCommand command) {
+        EmailAddress emailAddress = new EmailAddress(command.email());
+        PasswordPolicy.validateNewPassword(command.password());
 
-        PasswordHash passwordHash = passwordHashing.hash(password);
+        PasswordHash passwordHash = passwordHashing.hash(command.password());
         Instant now = clock.instant().truncatedTo(ChronoUnit.MICROS);
         Account account = Account.register(new AccountId(UUID.randomUUID()), emailAddress, passwordHash, now);
 
@@ -48,16 +48,16 @@ public class IdentityService implements AccountAccess {
         return account;
     }
 
-    public Account authenticate(String email, String password) {
-        EmailAddress emailAddress = new EmailAddress(email);
-        PasswordPolicy.validateLoginInput(password);
+    public Account authenticate(AuthenticateAccountCommand command) {
+        EmailAddress emailAddress = new EmailAddress(command.email());
+        PasswordPolicy.validateLoginInput(command.password());
 
         Account account = accountRepository.findByEmail(emailAddress).orElseThrow(() -> {
-            passwordHashing.performDummyVerification(password);
+            passwordHashing.performDummyVerification(command.password());
             return new InvalidCredentialsException();
         });
 
-        boolean passwordMatches = passwordHashing.matches(password, account.passwordHash());
+        boolean passwordMatches = passwordHashing.matches(command.password(), account.passwordHash());
         if (!passwordMatches || !account.canAuthenticate()) {
             throw new InvalidCredentialsException();
         }

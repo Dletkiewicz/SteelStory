@@ -45,7 +45,7 @@ class IdentityMigrationIT {
         List<Integer> originalChecksums = Arrays.stream(legacy.info().applied())
                 .map(MigrationInfo::getChecksum).toList();
 
-        Flyway current = configuration().load();
+        Flyway current = configuration().target("0004").load();
         assertLegacyEmailGapsAndSafeMigrationFailure(current);
         assertThat(current.migrate().migrationsExecuted).isEqualTo(1);
         assertThat(Arrays.stream(current.info().applied()).limit(3).map(MigrationInfo::getChecksum).toList())

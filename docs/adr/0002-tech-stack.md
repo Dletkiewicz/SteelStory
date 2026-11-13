@@ -126,3 +126,18 @@ Java 25 is the language/runtime requirement; the historical Oracle 25.0.2 path a
 Add Maven Checkstyle Plugin **3.6.0** and explicitly override its bundled engine with Checkstyle **14.4.0**, scoped to Identity/security source and tests. Official [Maven usage](https://maven.apache.org/plugins/maven-checkstyle-plugin/usage.html) and [engine override instructions](https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/upgrading-checkstyle.html) support this setup. The [Checkstyle release](https://checkstyle.org/) and [IllegalType var rule](https://checkstyle.org/checks/coding/illegaltype.html) were checked; Maven execution on the actual Java 25 code verifies compatibility. The engine understands the records, text blocks and package annotations in use. No autoformat step or system tool is installed.
 
 The quality gate runs in validate, so existing CI's Maven verify already invokes it. Compiler diagnostics `-Xlint:rawtypes -Werror` reject raw types in main/test code. Negative probes check that the gate fails on actual violations. Lombok remains absent because the current constructors do not justify an additional processor. Exact audit findings, checks and limitations are recorded in the [quality-gate report](../milestones/2a-quality-gate.md).
+
+## Milestone 2B.3 frontend verification amendment (2026-11-12)
+
+The existing React 19.3.1, React DOM 19.3.1, TypeScript 7.0.2, Vite 8.3.6,
+plugin-react 6.2.1, Tailwind/plugin 4.3.5 and Oxlint 1.93.0 remain unchanged.
+Add only development dependency `@playwright/test` **1.65.0**, pinned with its
+lockfile, for repeatable browser interaction and actual-backend acceptance tests.
+Its registry engine requirement is Node >=20; the official
+[Playwright installation guide](https://playwright.dev/docs/intro) supports Node 24.
+Local execution verifies the actual combination on Node **24.22.2**, npm **10.8.2**
+and installed Microsoft Edge. No production dependency, routing/state library,
+backend dependency, HTTP contract or module dependency changes are introduced.
+Node's built-in test runner handles pure TypeScript tests without another runner.
+Hosted Linux CI and Firefox/WebKit remain unverified. See the
+[delivery report](../milestones/2b3-character-frontend.md) for executed checks.

@@ -1,12 +1,37 @@
 # Steelstory architecture
 
-Status: **APPROVED**, updated 2026-11-12. Foundation is complete; Milestone 2A: Identity is authorized and implemented. Approved requirements and marked business proposals remain distinguished below. The domain module map describes future incremental work; no gameplay modules exist yet.
+Status: **APPROVED**, updated 2026-11-12. Foundation is complete; Milestone 2A: Identity is authorized and implemented. Approved requirements and marked business proposals remain distinguished below. The domain module map describes future incremental work; Identity and character creation are implemented; other gameplay modules remain planned.
 
-The application is one Maven backend, a Vite frontend and local PostgreSQL Compose service. `bootstrap.web` contains the public `GET /api/v1/status`, global problem responses and OpenAPI metadata. Explicit Modulith detection finds exactly one module, `identity`, with no allowed domain dependencies; verification remains active. Its named `api` exports only `AccountId` and `AccountAccess.isActive`. Bootstrap security consumes that API and standard Spring authentication interfaces, never identity internals. Flyway V0001 remains unchanged; V0002/V0003 add accounts and JDBC sessions. The frontend retains its small typed status adapter; authentication screens and client generation are deferred. See [README](../README.md), [ADR 0002](adr/0002-tech-stack.md) and [ADR 0003](adr/0003-identity-sessions-and-security.md).
+The application is one Maven backend, a Vite frontend and local PostgreSQL Compose service. `bootstrap.web` contains the public `GET /api/v1/status`, global problem responses and OpenAPI metadata. Explicit Modulith detection finds two modules: `identity` with no dependencies and `character` allowing only `identity::api`; verification remains active. Its named `api` exports only `AccountId` and `AccountAccess.isActive`. Bootstrap security consumes that API and standard Spring authentication interfaces, never identity internals. Flyway V0001 remains unchanged; V0002/V0003 add accounts and JDBC sessions. Milestone 2B.3 extends the small typed frontend adapter with authentication, automatic CSRF, character creation/list/get and the retained status check. Client generation remains deferred. React feature state is local, with one session hook and hash-based profile navigation; no global active character is stored on the server. Backend dependencies and contracts are unchanged. See [frontend delivery](milestones/2b3-character-frontend.md), [README](../README.md), [ADR 0002](adr/0002-tech-stack.md) and [ADR 0003](adr/0003-identity-sessions-and-security.md).
 
 Approved requirements include the retained stack and modular monolith, one-to-many Account -> Character cardinality, five initial attributes (Strength, Dexterity, Intelligence, Constitution and Luck), asynchronous arena attacks without defender acceptance, a planned auction house, OpenAPI contract documentation, and incremental module introduction. Attribute formulas and explicitly marked business proposals remain undecided.
 
+Milestone 3A amendment (2026-11-13): Character owns lifetime XP, level and unspent
+training points. The module graph is unchanged. A trusted internal application
+entry point serializes awards with deletion using account-guard then character-row
+locks. A separate local-profile + property-gated controller exposes an owner-only
+CSRF-protected testing operation; no production XP route is registered. Character
+responses add a read-only progression summary; React does not duplicate the curve.
+No schema migration, event bus or exported module API is needed without a concrete
+cross-module caller. See [ADR 0007](adr/0007-character-progression.md) and the
+[Milestone 3A report](milestones/3a-character-progression.md).
+
 ## 1. Shape and priorities
+
+Post-2B.3 amendment (2026-11-13): the existing module graph is unchanged. Character
+now exposes owner-only soft deletion, with V0006, active-only reads/counts and a
+deliberately extended OpenAPI contract. The frontend confirms the exact name and
+uses original local class portraits with level-based visual tier fallback. See
+[ADR 0005](adr/0005-character-soft-deletion.md) and the
+[delivery report](milestones/character-deletion-and-portraits.md).
+
+Portrait rework amendment (2026-11-13): cosmetic appearance gender is stored by
+character using V0007 and an internal domain enum. Creation accepts an optional
+appearance value for older-client compatibility; responses always include the
+saved value. Six local WebP portraits use a class/gender/tier manifest. Module
+dependencies, ownership checks and transaction guards are unchanged. See
+[ADR 0006](adr/0006-character-appearance.md) and the
+[rework report](milestones/portrait-system-rework.md).
 
 Start with one deployable Spring Boot application, one PostgreSQL database, and a separately built React SPA in a monorepo. Use Spring MVC and blocking JDBC persistence. The dominant correctness problem is concurrent changes to durable game state, not real-time networking.
 
@@ -29,7 +54,7 @@ The following table is the **complete planned allowlist of direct domain-module 
 | --- | --- | --- |
 | `identity` | Accounts, credentials, account status; account eligibility and identity API | None |
 | `catalog` | Immutable, versioned item, enemy, expedition, progression, and loot definitions; definition lookup | None |
-| `character` | Many characters per account, character identity/class, level, XP and the five allocated attributes; ownership/eligibility and progression | `identity`, `catalog` |
+| `character` | Creation and own-character reads implemented; progression remains future work | `identity` implemented; `catalog` planned when needed |
 | `economy` | Wallets, holds, immutable journal and authorized transfers; proposed account gold and character silver | `character`; `identity` conditional on approval of account-owned gold |
 | `inventory` | Item instances, ownership, equipment slots, reservations/escrow, delivery storage | `character`, `catalog` |
 | `combat` | Pure deterministic combat engine and combat input/output contracts; no live entity lookups | None |
@@ -46,7 +71,7 @@ Guild buffs, treasuries, premium billing, achievements, and notifications are no
 
 ### Account cardinality and proposed currency ownership
 
-**Approved:** Account -> Character is one-to-many: an account may have zero or more characters, and each character has exactly one owning account. Store an account reference on each character without a permanent unique constraint on that reference. An initial character cap is a separate product policy; enforce concurrent creation limits through an account guard exposed by `identity`, with count/creation owned by `character`. Identity does not load character tables or acquire a reverse dependency. No world/shard subsystem is introduced.
+**Approved:** Account -> Character is one-to-many: an account may have zero or more characters, and each character has exactly one owning account. Store an account reference on each character without a permanent unique constraint on that reference. An initial character cap is a separate product policy; Milestone 2B.2 enforces the three-character cap with a character-owned guard row per account, locked in the count/insert transaction. Eligibility is read through `identity::api`; it is not an account-status lock. Identity does not load character tables or acquire a reverse dependency. No world/shard subsystem is introduced.
 
 **Proposed, requires approval:** premium gold is account-owned; silver is character-owned. `economy` still owns all wallets, holds, journal entries and mutations. Use explicit account-gold and character-silver owner types/keys and database constraints, not an unrestricted owner-type string. Gold references `AccountId` through `identity::api`; silver references `CharacterId` through `character::api`. The conditional direct `economy -> identity` dependency is necessary for account IDs/eligibility, is acyclic, and must not be implemented as approved until the ownership proposal is accepted. Neither identity nor character calls back into economy.
 
@@ -76,6 +101,8 @@ Use allowlist entries such as `inventory::api`. Keep module root packages free o
 
 Domain code has no HTTP, Spring, JDBC, ORM, or other modules' internal dependencies. Application code coordinates domain behavior and transaction policy. Infrastructure implements narrowly scoped persistence ports. Web code authenticates/decodes requests and maps results; it contains no pricing, eligibility, time, loot, or combat decisions. Avoid interfaces without a real boundary and generic base services/repositories.
 
+REST uses project-owned `RequestDto`/`ResponseDto` transport records, explicit web-layer mapping and typed `ResponseEntity<ResponseDto>` returns (or `ResponseEntity<Void>` for 204). Application commands are separate from HTTP DTOs; services and domain classes cannot depend on web models. Aggregates are created/operated on in application/domain code and mapped to safe response fields before serialization. Identity login retains Spring Security's standard token/provider boundary, which maps credentials into an application command. Architecture tests enforce DTO naming/dependencies and controller request/response signatures alongside Modulith verification. Module dependencies are unchanged. See [ADR 0004](adr/0004-rest-dto-boundary.md).
+
 Bootstrap wires clocks, authentication, executors, and adapters; it must not become an alternate gameplay orchestration layer. Any small shared technical helper must contain no game entities or rules. Module-owned public ID/value types are preferred to a growing `common` domain.
 
 ## 3. Persistence and transaction model
@@ -84,7 +111,7 @@ Use Spring JDBC (`JdbcClient`/`JdbcTemplate`) behind module-owned repositories. 
 
 One database and one transaction manager serve all modules. Table names are prefixed with their owning module. Only that module's adapters may read or write its tables, including reporting queries. Compose read responses through APIs initially. Later read models must have documented ownership and freshness and must never authorize mutations.
 
-References across modules are scalar IDs, not entity associations. Foreign keys to stable owner IDs are allowed where they protect integrity, documented jointly by both modules; they grant no query permission. Avoid cascading deletes across module boundaries. Account/character deletion must explicitly settle assets and pending activity, and is deferred until its policy is defined.
+References across modules are scalar IDs, not entity associations. Foreign keys to stable owner IDs are allowed where they protect integrity, documented jointly by both modules; they grant no query permission. Avoid cascading deletes across module boundaries. Owner-confirmed character soft deletion is now implemented under [ADR 0005](adr/0005-character-soft-deletion.md), using the same character-owned account guard as creation. Deleted rows/names remain retained; all playable reads and slot counts exclude them. There are currently no inventory, economy or pending gameplay obligations. Future such modules must explicitly define deletion eligibility/settlement before adding dependencies. Account deletion remains deferred.
 
 Application service entrypoints own transactions; synchronous participant writes join the same transaction (`REQUIRED`, or `MANDATORY` for explicitly transaction-only internal APIs). Do not use `REQUIRES_NEW` for money, item transfers, or reward receipts. No HTTP calls or other external side effects occur inside these transactions.
 
@@ -191,4 +218,4 @@ The database remains the shared consistency and capacity limit. Multiple backend
 | API tooling | OpenAPI 3.1 export and springdoc 3.2.0 are implemented and tested; TypeScript client generation is deferred until useful |
 | Operations | Expected concurrency, action volume, latency/settlement targets, hosting, backup retention and RPO/RTO unresolved |
 
-Authorization currently ends at Milestone 2A Identity; 2B/2C and gameplay require their own scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).
+Current authorization includes Milestone 3A XP/level progression and explicitly enabled local testing. Combat, training-point spending and other gameplay require separate scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).
