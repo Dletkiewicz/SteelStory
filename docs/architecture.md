@@ -6,7 +6,32 @@ The application is one Maven backend, a Vite frontend and local PostgreSQL Compo
 
 Approved requirements include the retained stack and modular monolith, one-to-many Account -> Character cardinality, five initial attributes (Strength, Dexterity, Intelligence, Constitution and Luck), asynchronous arena attacks without defender acceptance, a planned auction house, OpenAPI contract documentation, and incremental module introduction. Attribute formulas and explicitly marked business proposals remain undecided.
 
+Milestone 3A amendment (2026-11-13): Character owns lifetime XP, level and unspent
+training points. The module graph is unchanged. A trusted internal application
+entry point serializes awards with deletion using account-guard then character-row
+locks. A separate local-profile + property-gated controller exposes an owner-only
+CSRF-protected testing operation; no production XP route is registered. Character
+responses add a read-only progression summary; React does not duplicate the curve.
+No schema migration, event bus or exported module API is needed without a concrete
+cross-module caller. See [ADR 0007](adr/0007-character-progression.md) and the
+[Milestone 3A report](milestones/3a-character-progression.md).
+
 ## 1. Shape and priorities
+
+Post-2B.3 amendment (2026-11-13): the existing module graph is unchanged. Character
+now exposes owner-only soft deletion, with V0006, active-only reads/counts and a
+deliberately extended OpenAPI contract. The frontend confirms the exact name and
+uses original local class portraits with level-based visual tier fallback. See
+[ADR 0005](adr/0005-character-soft-deletion.md) and the
+[delivery report](milestones/character-deletion-and-portraits.md).
+
+Portrait rework amendment (2026-11-13): cosmetic appearance gender is stored by
+character using V0007 and an internal domain enum. Creation accepts an optional
+appearance value for older-client compatibility; responses always include the
+saved value. Six local WebP portraits use a class/gender/tier manifest. Module
+dependencies, ownership checks and transaction guards are unchanged. See
+[ADR 0006](adr/0006-character-appearance.md) and the
+[rework report](milestones/portrait-system-rework.md).
 
 Start with one deployable Spring Boot application, one PostgreSQL database, and a separately built React SPA in a monorepo. Use Spring MVC and blocking JDBC persistence. The dominant correctness problem is concurrent changes to durable game state, not real-time networking.
 
@@ -86,7 +111,7 @@ Use Spring JDBC (`JdbcClient`/`JdbcTemplate`) behind module-owned repositories. 
 
 One database and one transaction manager serve all modules. Table names are prefixed with their owning module. Only that module's adapters may read or write its tables, including reporting queries. Compose read responses through APIs initially. Later read models must have documented ownership and freshness and must never authorize mutations.
 
-References across modules are scalar IDs, not entity associations. Foreign keys to stable owner IDs are allowed where they protect integrity, documented jointly by both modules; they grant no query permission. Avoid cascading deletes across module boundaries. Account/character deletion must explicitly settle assets and pending activity, and is deferred until its policy is defined.
+References across modules are scalar IDs, not entity associations. Foreign keys to stable owner IDs are allowed where they protect integrity, documented jointly by both modules; they grant no query permission. Avoid cascading deletes across module boundaries. Owner-confirmed character soft deletion is now implemented under [ADR 0005](adr/0005-character-soft-deletion.md), using the same character-owned account guard as creation. Deleted rows/names remain retained; all playable reads and slot counts exclude them. There are currently no inventory, economy or pending gameplay obligations. Future such modules must explicitly define deletion eligibility/settlement before adding dependencies. Account deletion remains deferred.
 
 Application service entrypoints own transactions; synchronous participant writes join the same transaction (`REQUIRED`, or `MANDATORY` for explicitly transaction-only internal APIs). Do not use `REQUIRES_NEW` for money, item transfers, or reward receipts. No HTTP calls or other external side effects occur inside these transactions.
 
@@ -193,4 +218,4 @@ The database remains the shared consistency and capacity limit. Multiple backend
 | API tooling | OpenAPI 3.1 export and springdoc 3.2.0 are implemented and tested; TypeScript client generation is deferred until useful |
 | Operations | Expected concurrency, action volume, latency/settlement targets, hosting, backup retention and RPO/RTO unresolved |
 
-Authorization currently ends at Milestone 2A Identity; 2B/2C and gameplay require their own scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).
+Current authorization includes Milestone 3A XP/level progression and explicitly enabled local testing. Combat, training-point spending and other gameplay require separate scope. Version evidence is centralized in [ADR 0002](adr/0002-tech-stack.md); aggregate rules are in the [domain model](domain-model.md).

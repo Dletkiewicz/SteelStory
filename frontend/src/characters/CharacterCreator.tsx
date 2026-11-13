@@ -1,18 +1,19 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { api } from '../api/client';
-import type { CharacterClass, CharacterResponse } from '../api/contracts';
+import type { AppearanceGender, CharacterClass, CharacterResponse } from '../api/contracts';
 import { ApiError } from '../api/errors';
-import { ClassEmblem } from '../ui/ClassEmblem';
+import { CharacterPortrait } from '../ui/CharacterPortrait';
 import { ErrorNotice } from '../ui/Feedback';
 import {
-  adjustAllocation, attributes, characterClasses, classes, creationRequest,
+  adjustAllocation, appearanceGenders, attributes, characterClasses, classes, creationRequest, genderLabels,
   emptyAllocation, remainingPoints, validCharacterName,
 } from './creation';
 
 export function CharacterCreator({ created }: { created: (character: CharacterResponse) => void }) {
   const [name, setName] = useState('');
   const [characterClass, setCharacterClass] = useState<CharacterClass>('WARRIOR');
+  const [appearanceGender, setAppearanceGender] = useState<AppearanceGender>('MALE');
   const [allocation, setAllocation] = useState(emptyAllocation);
   const [touched, setTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -26,7 +27,7 @@ export function CharacterCreator({ created }: { created: (character: CharacterRe
     event.preventDefault(); setTouched(true);
     if (busy || !validName || remaining !== 0 || uncertain || limitReached) return;
     setBusy(true); setError(null);
-    try { created(await api.createCharacter(creationRequest(name, characterClass, allocation))); }
+    try { created(await api.createCharacter(creationRequest(name, characterClass, appearanceGender, allocation))); }
     catch (failure) { setError(failure); }
     finally { setBusy(false); }
   }
@@ -52,13 +53,24 @@ export function CharacterCreator({ created }: { created: (character: CharacterRe
           <p id="name-error" className="field-error">{touched && !validName ? 'Wpisz poprawne imię bez skrajnych lub podwójnych spacji.' : ''}</p>
         </div>
       </fieldset>
+      <fieldset disabled={busy || uncertain || limitReached} className="panel appearance-panel">
+        <legend className="panel-heading">Wygląd postaci</legend>
+        <div className="panel-body">
+          <div className="appearance-choices">{appearanceGenders.map((gender) => <label key={gender}>
+            <input type="radio" name="appearanceGender" value={gender} checked={appearanceGender === gender}
+              onChange={() => setAppearanceGender(gender)} />{genderLabels[gender]}
+          </label>)}</div>
+          <p className="field-hint">Wybór dotyczy wyglądu portretu i nie wpływa na atrybuty. Zapiszesz go razem z postacią.</p>
+        </div>
+      </fieldset>
       <fieldset disabled={busy || uncertain || limitReached} className="class-fieldset">
         <legend className="section-ribbon"><span><span className="step-number">II</span> Wybierz swoją drogę</span></legend>
         <div className="class-choices">{characterClasses.map((choice) => <label key={choice}
           className={`class-choice ${characterClass === choice ? 'selected' : ''}`}>
           <input type="radio" name="characterClass" value={choice} checked={characterClass === choice}
             onChange={() => setCharacterClass(choice)} />
-          <ClassEmblem characterClass={choice} /><span className="class-name">{classes[choice].label}</span>
+          <CharacterPortrait characterClass={choice} gender={appearanceGender} level={1} />
+          <span className="class-name">{classes[choice].label}</span>
           <span>{classes[choice].description}</span><small>Główny atrybut: {classes[choice].attribute}</small>
         </label>)}</div>
         <p className="field-hint">Klasa jest stała. Nie zmienia początkowych wartości atrybutów. Bronie pojawią się w przyszłych etapach gry.</p>

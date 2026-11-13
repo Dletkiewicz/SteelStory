@@ -4,6 +4,37 @@ import { ApiClient } from '../../src/api/client.ts';
 import { ApiError, errorMessage } from '../../src/api/errors.ts';
 
 afterEach(() => mock.restoreAll());
+
+test('DELETE obtains CSRF, uses cookies, encodes the ID and accepts an empty 204', async () => {
+  const calls: { path: string; options: RequestInit | undefined }[] = [];
+  mock.method(globalThis, 'fetch', async (path: string, options?: RequestInit) => {
+    calls.push({ path, options });
+    return path.endsWith('/csrf') ? json({ headerName: 'X-CSRF-TOKEN', token: 'delete-test' })
+      : new Response(null, { status: 204 });
+  });
+  assert.equal(await new ApiClient().deleteCharacter('character/id'), undefined);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[1]?.path, '/api/v1/characters/character%2Fid');
+  assert.equal(calls[1]?.options?.method, 'DELETE');
+  assert.equal(calls[1]?.options?.credentials, 'same-origin');
+  assert.equal(calls[1]?.options?.body, undefined);
+  assert.equal(new Headers(calls[1]?.options?.headers).get('X-CSRF-TOKEN'), 'delete-test');
+});
+
+test('DELETE never replays after network failure and maps an already missing character to 404', async () => {
+  let deletes = 0;
+  mock.method(globalThis, 'fetch', async (path: string) => {
+    if (path.endsWith('/csrf')) return json({ headerName: 'X-CSRF-TOKEN', token: 'delete-test' });
+    deletes++;
+    if (deletes === 1) throw new TypeError('lost response');
+    return json({ code: 'CHARACTER_NOT_FOUND' }, 404);
+  });
+  const client = new ApiClient();
+  await assert.rejects(client.deleteCharacter('id'), (error: unknown) => error instanceof ApiError && error.status === 0);
+  assert.equal(deletes, 1);
+  await assert.rejects(client.deleteCharacter('id'), (error: unknown) => error instanceof ApiError && error.status === 404);
+  assert.equal(deletes, 2);
+});
 function json(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
@@ -62,7 +93,7 @@ test('network failure during a POST does not retry and reports an uncertain outc
     if (path.endsWith('/csrf')) return json({ headerName: 'X-CSRF-TOKEN', token: 'synthetic' });
     posts++; throw new TypeError('failed fetch');
   });
-  await assert.rejects(new ApiClient().createCharacter({ name: 'Test Hero', characterClass: 'MAGE',
+  await assert.rejects(new ApiClient().createCharacter({ name: 'Test Hero', characterClass: 'MAGE', appearanceGender: 'FEMALE',
     startingAllocation: { strength: 0, dexterity: 0, intelligence: 10, constitution: 0, luck: 0 } }),
   (error: unknown) => error instanceof ApiError && error.status === 0);
   assert.equal(posts, 1);

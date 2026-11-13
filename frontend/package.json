@@ -12,9 +12,9 @@
     "typecheck": "tsc --noEmit",
     "lint": "oxlint --deny-warnings src tests vite.config.ts playwright.config.ts",
     "test": "node --test tests/unit/*.test.ts",
-    "test:ui": "playwright test --project=ui",
+    "test:ui": "playwright test --project=ui --project=progression",
     "test:e2e": "playwright test --project=integration",
-    "build": "npm run typecheck && vite build",
+    "build": "npm run typecheck && vite build && node scripts/check-production-build.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {

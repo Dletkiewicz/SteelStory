@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,7 +43,8 @@ public class CharacterController {
     }
 
     @Operation(operationId = "createCharacter", summary = "Create an owned character",
-            description = "Distribute exactly 10 points above base 5. At most 3 characters per account.")
+            description = "Distribute exactly 10 points above base 5. At most 3 active characters per account. "
+                    + "Deleted names remain reserved.")
     @Parameter(name = "X-CSRF-TOKEN", in = ParameterIn.HEADER, required = true,
             description = "Token from getCsrfToken")
     @ApiResponse(responseCode = "201", description = "Character created")
@@ -65,7 +67,7 @@ public class CharacterController {
                 .body(CharacterDtoMapper.toResponse(character));
     }
 
-    @Operation(operationId = "listOwnCharacters", summary = "List owned characters in creation order")
+    @Operation(operationId = "listOwnCharacters", summary = "List active owned characters in creation order")
     @ApiResponse(responseCode = "200", description = "Owned characters ordered by creation time, then ID")
     @GetMapping
     public ResponseEntity<CharacterListResponseDto> list(Authentication principal) {
@@ -79,7 +81,7 @@ public class CharacterController {
     @ApiResponse(responseCode = "400", description = "Invalid character ID",
             content = @Content(mediaType = "application/problem+json",
                     schema = @Schema(implementation = CharacterProblemResponseDto.class)))
-    @ApiResponse(responseCode = "404", description = "Unknown or unowned character",
+    @ApiResponse(responseCode = "404", description = "Unknown, deleted or unowned character",
             content = @Content(mediaType = "application/problem+json",
                     schema = @Schema(implementation = CharacterProblemResponseDto.class)))
     @GetMapping("/{id}")
@@ -90,5 +92,26 @@ public class CharacterController {
 
     private AccountId accountId(Authentication principal) {
         return new AccountId(UUID.fromString(principal.getName()));
+    }
+
+    @Operation(operationId = "deleteOwnCharacter", summary = "Soft-delete an owned character",
+            description = "Frees an active slot and keeps the name reserved. No recovery operation exists. "
+                    + "Repeated deletion returns 404.")
+    @Parameter(name = "X-CSRF-TOKEN", in = ParameterIn.HEADER, required = true,
+            description = "Token from getCsrfToken")
+    @ApiResponse(responseCode = "204", description = "Character deleted", content = @Content)
+    @ApiResponse(responseCode = "400", description = "Invalid character ID",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = CharacterProblemResponseDto.class)))
+    @ApiResponse(responseCode = "403", description = "Missing or invalid CSRF token",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = CharacterProblemResponseDto.class)))
+    @ApiResponse(responseCode = "404", description = "Unknown, deleted or unowned character",
+            content = @Content(mediaType = "application/problem+json",
+                    schema = @Schema(implementation = CharacterProblemResponseDto.class)))
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable UUID id, Authentication principal) {
+        characterService.deleteOwn(accountId(principal), new CharacterId(id));
+        return ResponseEntity.noContent().build();
     }
 }

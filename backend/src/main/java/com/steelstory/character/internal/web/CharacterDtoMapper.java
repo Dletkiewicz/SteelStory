@@ -1,13 +1,16 @@
 package com.steelstory.character.internal.web;
 
 import com.steelstory.character.internal.application.CreateCharacterCommand;
+import com.steelstory.character.internal.domain.AppearanceGender;
 import com.steelstory.character.internal.domain.CharacterAttributes;
 import com.steelstory.character.internal.domain.CharacterClass;
 import com.steelstory.character.internal.domain.CharacterName;
+import com.steelstory.character.internal.domain.ExperienceCurve;
 import com.steelstory.character.internal.domain.InvalidCharacterInputException;
 import com.steelstory.character.internal.domain.PlayerCharacter;
 import com.steelstory.character.internal.domain.StartingAllocation;
 import com.steelstory.character.internal.web.dto.CharacterAttributesResponseDto;
+import com.steelstory.character.internal.web.dto.CharacterProgressionResponseDto;
 import com.steelstory.character.internal.web.dto.CharacterResponseDto;
 import com.steelstory.character.internal.web.dto.CreateCharacterRequestDto;
 import com.steelstory.character.internal.web.dto.StartingAllocationRequestDto;
@@ -29,16 +32,27 @@ final class CharacterDtoMapper {
                 integer(allocation.intelligence()),
                 integer(allocation.constitution()),
                 integer(allocation.luck()));
+        CharacterClass characterClass = CharacterClass.parse(request.characterClass());
         return new CreateCharacterCommand(
-                new CharacterName(request.name()), CharacterClass.parse(request.characterClass()),
+                new CharacterName(request.name()), characterClass,
+                AppearanceGender.forCreation(request.appearanceGender(), characterClass),
                 new StartingAllocation(points));
     }
 
     static CharacterResponseDto toResponse(PlayerCharacter character) {
         return new CharacterResponseDto(character.id().value(), character.name().value(),
-                character.characterClass().name(), character.level(), character.experience(),
+                character.characterClass().name(), character.appearanceGender().name(),
+                character.level(), character.experience(),
                 character.unspentTrainingPoints(), attributes(character.startingAttributes()),
-                attributes(character.trainedAttributes()), character.createdAt(), character.updatedAt());
+                attributes(character.trainedAttributes()), character.createdAt(), character.updatedAt(),
+                progression(character));
+    }
+
+    private static CharacterProgressionResponseDto progression(PlayerCharacter character) {
+        long progress = ExperienceCurve.progressWithinCurrentLevel(character.experience(), character.level());
+        long required = ExperienceCurve.experienceRequiredForNextLevel(character.level());
+        return new CharacterProgressionResponseDto(progress, required, required - progress,
+                character.level() == ExperienceCurve.MAXIMUM_LEVEL);
     }
 
     private static CharacterAttributesResponseDto attributes(CharacterAttributes attributes) {

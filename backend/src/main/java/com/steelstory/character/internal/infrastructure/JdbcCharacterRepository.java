@@ -1,6 +1,7 @@
 package com.steelstory.character.internal.infrastructure;
 
 import com.steelstory.character.internal.application.CharacterRepository;
+import com.steelstory.character.internal.domain.AppearanceGender;
 import com.steelstory.character.internal.domain.CharacterAttributes;
 import com.steelstory.character.internal.domain.CharacterClass;
 import com.steelstory.character.internal.domain.CharacterId;
@@ -39,7 +40,10 @@ public class JdbcCharacterRepository implements CharacterRepository {
 
     @Override
     public int countOwned(AccountId accountId) {
-        return jdbcClient.sql("SELECT count(*) FROM steelstory.character_characters WHERE account_id = :accountId")
+        return jdbcClient.sql("""
+                SELECT count(*) FROM steelstory.character_characters
+                WHERE account_id = :accountId AND deleted_at IS NULL
+                """)
                 .param("accountId", accountId.value()).query(Integer.class).single();
     }
 
@@ -47,11 +51,11 @@ public class JdbcCharacterRepository implements CharacterRepository {
     public boolean insert(PlayerCharacter character) {
         return jdbcClient.sql("""
                 INSERT INTO steelstory.character_characters
-                    (id, account_id, name, character_class,
+                    (id, account_id, name, character_class, appearance_gender,
                      starting_strength, starting_dexterity, starting_intelligence, starting_constitution, starting_luck,
                      trained_strength, trained_dexterity, trained_intelligence, trained_constitution, trained_luck,
                      level, experience, unspent_training_points, created_at, updated_at)
-                VALUES (:id, :accountId, :name, :characterClass,
+                VALUES (:id, :accountId, :name, :characterClass, :appearanceGender,
                         :strength, :dexterity, :intelligence, :constitution, :luck,
                         0, 0, 0, 0, 0, 1, 0, 0, :createdAt, :updatedAt)
                 ON CONFLICT (canonical_name) DO NOTHING
@@ -60,6 +64,7 @@ public class JdbcCharacterRepository implements CharacterRepository {
                 .param("accountId", character.accountId().value())
                 .param("name", character.name().value())
                 .param("characterClass", character.characterClass().name())
+                .param("appearanceGender", character.appearanceGender().name())
                 .param("strength", character.startingAttributes().strength())
                 .param("dexterity", character.startingAttributes().dexterity())
                 .param("intelligence", character.startingAttributes().intelligence())
@@ -73,7 +78,8 @@ public class JdbcCharacterRepository implements CharacterRepository {
     @Override
     public List<PlayerCharacter> findOwned(AccountId accountId) {
         return jdbcClient.sql("""
-                SELECT * FROM steelstory.character_characters WHERE account_id = :accountId
+                SELECT * FROM steelstory.character_characters
+                WHERE account_id = :accountId AND deleted_at IS NULL
                 ORDER BY created_at, id
                 """).param("accountId", accountId.value()).query(this::mapCharacter).list();
     }
@@ -81,15 +87,50 @@ public class JdbcCharacterRepository implements CharacterRepository {
     @Override
     public Optional<PlayerCharacter> findOwned(AccountId accountId, CharacterId characterId) {
         return jdbcClient.sql("""
-                SELECT * FROM steelstory.character_characters WHERE account_id = :accountId AND id = :id
+                SELECT * FROM steelstory.character_characters
+                WHERE account_id = :accountId AND id = :id AND deleted_at IS NULL
                 """).param("accountId", accountId.value()).param("id", characterId.value())
                 .query(this::mapCharacter).optional();
+    }
+
+    @Override
+    public boolean markDeleted(PlayerCharacter character) {
+        return jdbcClient.sql("""
+                UPDATE steelstory.character_characters SET deleted_at = :deletedAt, updated_at = :deletedAt
+                WHERE account_id = :accountId AND id = :id AND deleted_at IS NULL
+                """).param("accountId", character.accountId().value()).param("id", character.id().value())
+                .param("deletedAt", character.deletedAt().atOffset(ZoneOffset.UTC)).update() == 1;
+    }
+
+    @Override
+    public Optional<PlayerCharacter> findOwnedForUpdate(AccountId accountId, CharacterId characterId) {
+        return jdbcClient.sql("""
+                SELECT * FROM steelstory.character_characters
+                WHERE account_id = :accountId AND id = :id AND deleted_at IS NULL FOR UPDATE
+                """).param("accountId", accountId.value()).param("id", characterId.value())
+                .query(this::mapCharacter).optional();
+    }
+
+    @Override
+    public void saveProgression(PlayerCharacter character) {
+        int updated = jdbcClient.sql("""
+                UPDATE steelstory.character_characters
+                SET experience = :experience, level = :level, unspent_training_points = :points, updated_at = :updatedAt
+                WHERE account_id = :accountId AND id = :id AND deleted_at IS NULL
+                """).param("accountId", character.accountId().value()).param("id", character.id().value())
+                .param("experience", character.experience()).param("level", character.level())
+                .param("points", character.unspentTrainingPoints())
+                .param("updatedAt", character.updatedAt().atOffset(ZoneOffset.UTC)).update();
+        if (updated != 1) {
+            throw new IllegalStateException("Locked character could not be updated.");
+        }
     }
 
     private PlayerCharacter mapCharacter(ResultSet row, int rowNumber) throws SQLException {
         return PlayerCharacter.restore(new CharacterId(row.getObject("id", UUID.class)),
                 new AccountId(row.getObject("account_id", UUID.class)), new CharacterName(row.getString("name")),
                 CharacterClass.parse(row.getString("character_class")),
+                AppearanceGender.parse(row.getString("appearance_gender")),
                 attributes(row, "starting_"), attributes(row, "trained_"),
                 row.getInt("level"), row.getLong("experience"), row.getInt("unspent_training_points"),
                 row.getObject("created_at", OffsetDateTime.class).toInstant(),

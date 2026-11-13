@@ -13,12 +13,37 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class CharacterDomainTest {
+    @Test
+    void deletionIsImmutablePreservesHistoryAndRejectsRepeatedOrBackdatedDeletion() {
+        Instant createdAt = Instant.parse("2026-11-13T10:00:00Z");
+        PlayerCharacter original = PlayerCharacter.create(new CharacterId(UUID.randomUUID()),
+                new AccountId(UUID.randomUUID()), new CharacterName("Retired Hero"), CharacterClass.WARRIOR,
+                AppearanceGender.FEMALE,
+                new StartingAllocation(new CharacterAttributes(6, 0, 0, 4, 0)), createdAt);
+        Instant deletedAt = createdAt.plusSeconds(60);
+        PlayerCharacter deleted = original.delete(deletedAt);
+
+        assertThat(original.deletedAt()).isNull();
+        assertThat(deleted.deletedAt()).isEqualTo(deletedAt);
+        assertThat(deleted.updatedAt()).isEqualTo(deletedAt);
+        assertThat(deleted.createdAt()).isEqualTo(createdAt);
+        assertThat(deleted.id()).isEqualTo(original.id());
+        assertThat(deleted.name()).isEqualTo(original.name());
+        assertThat(deleted.appearanceGender()).isEqualTo(AppearanceGender.FEMALE);
+        assertThat(deleted.startingAttributes()).isEqualTo(original.startingAttributes());
+        assertThatThrownBy(() -> deleted.delete(deletedAt.plusSeconds(1)))
+                .isInstanceOf(InvalidCharacterInputException.class);
+        assertThatThrownBy(() -> original.delete(createdAt.minusSeconds(1)))
+                .isInstanceOf(InvalidCharacterInputException.class);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"WARRIOR", "ARCHER", "MAGE"})
     void createsInitialStateWithSeparateTraining(String className) {
         CharacterClass characterClass = CharacterClass.parse(className);
         PlayerCharacter character = PlayerCharacter.create(new CharacterId(UUID.randomUUID()),
                 new AccountId(UUID.randomUUID()), new CharacterName("Dark Knight"), characterClass,
+                AppearanceGender.MALE,
                 new StartingAllocation(new CharacterAttributes(6, 0, 0, 4, 0)), Instant.now());
 
         assertThat(character.characterClass()).isEqualTo(characterClass);
@@ -82,6 +107,7 @@ class CharacterDomainTest {
     void reconstitutionCannotBypassStartingInvariants() {
         assertThatThrownBy(() -> PlayerCharacter.restore(new CharacterId(UUID.randomUUID()),
                 new AccountId(UUID.randomUUID()), new CharacterName("Valid Name"), CharacterClass.MAGE,
+                AppearanceGender.FEMALE,
                 new CharacterAttributes(4, 6, 5, 5, 15), new CharacterAttributes(0, 0, 0, 0, 0),
                 1, 0, 0, Instant.now(), Instant.now())).isInstanceOf(InvalidCharacterInputException.class);
     }

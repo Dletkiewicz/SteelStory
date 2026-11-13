@@ -1,6 +1,6 @@
 # Steelstory
 
-Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Milestone 2B.2 adds character creation and own-character reads. Milestone 2B.3 provides a Polish, classic fantasy browser frontend with registration, login, three character slots, creation and character profiles. Further gameplay remains deferred.
+Steelstory is an asynchronous multiplayer browser RPG. The architecture is **approved**. Milestone 1 provides the technical foundation; Milestone 2A adds accounts, session authentication and CSRF protection. Milestone 2B.2 adds character creation and own-character reads. Milestone 2B.3 provides a Polish, classic fantasy browser frontend with registration, login, three character slots, creation and character profiles. Owner-confirmed soft deletion and six original beginner portraits are implemented, with a saved male/female appearance choice and level-tier lookup. Milestone 3A adds lifetime XP, levels 1?200 and saved unspent training points, with explicitly enabled local XP tools. Combat and point spending remain deferred.
 
 ## Prerequisites
 
@@ -54,6 +54,8 @@ Open [the frontend](http://127.0.0.1:5173). Register, then log in separately to 
 
 See [the frontend delivery and test guide](docs/milestones/2b3-character-frontend.md) for manual acceptance steps, architecture, failure handling and browser tests.
 
+On a character profile, **Usuń postać** opens a themed confirmation dialog. Type the character's exact name to enable **Usuń bezpowrotnie**. The character disappears and its slot becomes available; its name remains reserved and there is no recovery operation. Choose **M??czyzna** or **Kobieta** during creation to preview all three classes. That cosmetic choice is saved with the character and does not change attributes. Class portraits are local original images, with tier-one fallback for the visual tiers at levels 1–20, 21–40, through 181–200. No leveling system is implemented. See [deletion and portraits](docs/milestones/character-deletion-and-portraits.md) and [ADR 0005](docs/adr/0005-character-soft-deletion.md).
+
 If port 5432 is occupied, set `POSTGRES_PORT=55432` for Compose and `DB_URL=jdbc:postgresql://localhost:55432/steelstory` for the backend. This was the configuration used during local verification. In PowerShell:
 
 ```powershell
@@ -67,6 +69,52 @@ cd backend
 Spring Boot does not automatically load Compose's `.env` file; export backend environment variables in its terminal. Other overrides include `DB_USERNAME`, `DB_PASSWORD` and `SERVER_PORT`. Changing the backend port also requires updating the Vite proxy target.
 
 Stop application terminals with Ctrl+C. `docker compose stop` preserves database data. `docker compose down` removes containers but keeps the named volume; adding `--volumes` destroys local data. Stop the packaged backend before rebuilding its JAR on Windows to avoid a file-lock failure.
+
+## Local XP testing (Milestone 3A)
+
+XP is lifetime total. The **provisional development curve** requires `100 * L * L`
+XP to advance from L to L+1. Cumulative thresholds are 0, 100, 500, 1,400?;
+level 200 caps total XP at 264,670,000. Each level-up earns three unspent points
+(597 by level 200). Initial allocation and trained attributes do not change.
+Teachers and point spending are not implemented. The profile reads its progress
+summary from the server; portrait tiers remain visual only with existing fallback.
+
+Both local XP tools are **disabled by default**. Stop existing backend/Vite processes
+before starting replacements. Start PostgreSQL as above, then in the backend terminal:
+
+```powershell
+cd C:\Users\Darek\Desktop\steelstory\backend
+.\mvnw.cmd spring-boot:run "-Dspring-boot.run.profiles=local" "-Dspring-boot.run.arguments=--steelstory.dev.xp.enabled=true"
+```
+
+In the frontend terminal:
+
+```powershell
+cd C:\Users\Darek\Desktop\steelstory\frontend
+$env:VITE_DEV_XP_ENABLED = 'true'
+npx --yes npm@10.8.2 run dev
+```
+
+Open http://127.0.0.1:5173, log in and select a character. **Panel developerski ? XP**
+offers 100 XP, 500 XP, a bounded custom amount and a read-only refresh. From a new
+character, 500 XP gives level 3 and six points. Awards persist in the database.
+A second click after completion is a new reward. Never replay an uncertain reward;
+read the saved state first. The tool shows actual accepted XP and awarded points.
+
+To disable: stop both processes, restart the backend with the normal local command
+(no XP argument), and in the frontend terminal run
+`Remove-Item Env:VITE_DEV_XP_ENABLED -ErrorAction SilentlyContinue` before restarting
+Vite. The profile remains available with read-only progression. Production builds
+always exclude the panel, even if the environment flag is set. The backend endpoint
+requires both local profile and explicit property; session, CSRF and owner checks
+remain mandatory. A missing/disabled endpoint produces an explanatory disabled panel.
+
+Optional API test: `POST /api/v1/dev/characters/{id}/grant-xp`, JSON `{"amount":500}`,
+using the same SESSION cookie and X-CSRF-TOKEN flow described below. Amount must be
+an integer from 1 to 1,000,000,000. Production players have no XP-grant API.
+See [Milestone 3A report](docs/milestones/3a-character-progression.md) and
+[ADR 0007](docs/adr/0007-character-progression.md) for locking, retry limitations,
+exact checks and future trusted reward integration. No new migration is needed.
 
 ## API and database
 
@@ -84,10 +132,14 @@ Without the local profile, `DB_URL`, `DB_USERNAME` and `DB_PASSWORD` are require
 ## Identity locally and in Postman
 
 Milestone 2B.2 also provides authenticated POST/GET /api/v1/characters and GET /api/v1/characters/{id}.
-Creation accepts name, characterClass and startingAllocation (exactly ten points above base 5), uses the same
+Creation accepts name, characterClass, optional appearanceGender (MALE/FEMALE) and startingAllocation (exactly ten points above base 5), uses the same
 SESSION/CSRF flow, and enforces three characters per account plus globally unique ASCII names.
 Flyway V0005 adds character-owned tables and the transactional account guard; prior migrations remain unchanged.
 See the [character backend report](docs/milestones/2b2-character-backend.md) for JSON examples and concurrency details.
+
+`DELETE /api/v1/characters/{id}` now soft-deletes an owned active character (204), with 404 for unknown, unowned or already deleted targets. It requires the same session and CSRF flow. List/detail exclude deleted characters and the creation cap counts only active rows. V0006 adds `deleted_at` without physically deleting existing data or releasing names. Restart the backend to apply the migration; no database reset is needed.
+
+V0007 persists cosmetic `appearance_gender` and adds `appearanceGender` to creation/list/detail responses. Omitted or null appearance on older creation requests defaults to FEMALE for ARCHER and MALE otherwise, matching the original portraits; existing rows use the same backfill. The new UI always sends an explicit choice. See [the portrait rework report](docs/milestones/portrait-system-rework.md), [art and all six prompts](docs/art/portrait-system-rework.md), and [ADR 0006](docs/adr/0006-character-appearance.md).
 
 Use the same Compose, backend `local` profile and Vite commands above. Existing VS Code launch settings and DBeaver connection details still apply. Milestone 2B.3 now provides React login/registration screens. The following manual API instructions are optional for developers using Postman; players use the browser UI. In DBeaver, accounts are in `steelstory.identity_accounts`; session tables are framework-owned and must not be edited by application modules.
 
@@ -142,7 +194,7 @@ npm run build
 
 Oxlint 1.93.0 supplies linting while preserving TypeScript 7 compatibility. Build output is `frontend/dist/`. The backend JAR is `backend/target/steelstory-0.1.0-SNAPSHOT.jar`; it can be run with `java -jar ... --spring.profiles.active=local` from the repository root using that path.
 
-`npm run test:e2e` additionally runs the actual browser acceptance flow with Spring Boot and PostgreSQL already running. On Windows, `$env:PLAYWRIGHT_CHANNEL = 'msedge'` uses installed Edge instead of downloading Chromium. Tests create synthetic local accounts and characters and retain them because deletion is outside scope. GitHub Actions runs backend verification on a Docker-capable Linux runner and frontend installation/typecheck/lint/unit tests/UI tests/build. Actions are pinned to commit SHAs. The real-stack browser test is currently local, and there is no deployment job.
+`npm run test:e2e` additionally runs two actual browser acceptance flows with Spring Boot and PostgreSQL already running; enable the backend local XP property above. Stop existing Vite processes before UI/E2E tests: Playwright owns a normal frontend on 5173 and an opt-in frontend on 5174. It creates three heroes, deletes one, verifies the missing detail and reserved name, then fills the freed slot. Its progression flow grants XP through the UI, crosses levels 20/21/40/41, reaches level 200 and verifies reload and unchanged attributes. On Windows, `$env:PLAYWRIGHT_CHANNEL = 'msedge'` uses installed Edge instead of downloading Chromium. Tests retain synthetic local accounts and character history, including soft-deleted rows. Stop Vite before `npm ci` on Windows to release native dependency file locks. GitHub Actions runs backend verification on a Docker-capable Linux runner and frontend installation/typecheck/lint/unit tests/UI tests/build. Actions are pinned to commit SHAs. The real-stack browser test is currently local, and there is no deployment job.
 
 ## Verification and limitations
 

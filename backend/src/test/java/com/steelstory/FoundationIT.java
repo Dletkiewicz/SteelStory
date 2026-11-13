@@ -44,10 +44,10 @@ class FoundationIT {
     @Test
     void contextStartsAgainstPostgresAndMigrationsAreRepeatable() {
         assertThat(jdbc.queryForObject("select count(*) from information_schema.schemata where schema_name = 'steelstory'", Integer.class)).isEqualTo(1);
-        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0005");
+        assertThat(flyway.info().current().getVersion().toString()).isEqualTo("0007");
         assertThat(flyway.validateWithResult().validationSuccessful).isTrue();
         assertThat(flyway.migrate().migrationsExecuted).isZero();
-        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(5);
+        assertThat(jdbc.queryForObject("select count(*) from flyway_schema_history where success = true", Integer.class)).isEqualTo(7);
     }
 
     @Test

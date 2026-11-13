@@ -274,3 +274,36 @@ input[aria-invalid=true] { border-color: #a24c35; }
   .site-footer { font-size: 9px; align-items: center; padding-inline: 6px; }
   .site-footer > span:first-child { font-size: 10px; }
 }
+
+/* Original class portraits share the existing bronze and parchment framing. */
+.progression-panel { margin: 24px 0; }
+.xp-summary { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.xp-track { height: 18px; border: 1px solid #886334; background: #c5ad83; margin: 12px 0 16px; box-shadow: inset 0 2px 4px #59402433; }
+.xp-track > span { display: block; height: 100%; background: linear-gradient(#d1ab53, #987030); }
+.dev-xp-panel { margin-top: 24px; border-style: dashed; }
+.dev-xp-panel fieldset { border: 0; padding: 0; margin: 16px 0; }
+.dev-xp-panel input { max-width: 240px; display: block; margin: 8px 0 12px; }
+.dev-xp-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.character-portrait { display: block; object-fit: cover; object-position: 50% 0; border: 1px solid #a3865b; }
+.slot-portrait .character-portrait { width: 100%; height: 100%; }
+.occupied .slot-portrait { margin: 12px auto 14px; width: 100%; max-width: 240px; height: auto; aspect-ratio: 3 / 4; display: block; overflow: hidden; flex-shrink: 0; }
+.profile-portrait .character-portrait { width: 180px; height: 240px; }
+.class-choice .character-portrait { width: 100%; height: auto; aspect-ratio: 3 / 4; margin-bottom: 12px; }
+.appearance-choices { display: flex; flex-wrap: wrap; gap: 12px 28px; }
+.appearance-choices label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.appearance-choices input { width: 18px; height: 18px; accent-color: #89612c; }
+.class-choice input { z-index: 1; }
+.profile-deletion { display: flex; justify-content: flex-end; margin-top: 22px; }
+.deletion-dialog { padding: 0; width: min(520px, calc(100vw - 28px)); max-height: calc(100dvh - 36px); margin: auto;
+  overflow-y: auto; color: #54432f; background: #f2e6ca; border: 4px solid #705235; box-shadow: 0 8px 30px #35251555; }
+.deletion-dialog::backdrop { background: #49331e88; }
+.deletion-dialog #deletion-warning { margin-bottom: 20px; line-height: 1.7; }
+.deletion-dialog label { display: block; }
+.dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+.button.danger { background: #88412f; border-color: #6b3325; color: #fff1d3; }
+.button.danger:hover:not(:disabled) { background: #753725; }
+@media (max-width: 580px) {
+  .profile-portrait .character-portrait { width: 160px; height: 214px; }
+  .class-choice .character-portrait { margin-top: 8px; }
+  .dialog-actions .button { flex: 1; padding-inline: 10px; }
+}

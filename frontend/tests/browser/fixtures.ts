@@ -6,8 +6,9 @@ export const account: AccountResponse = {
   createdAt: '2026-11-12T10:00:00Z', updatedAt: '2026-11-12T10:00:00Z',
 };
 export const character: CharacterResponse = {
-  id: 'test-character', name: 'Test Hero', characterClass: 'WARRIOR', level: 1,
+  id: 'test-character', name: 'Test Hero', characterClass: 'WARRIOR', appearanceGender: 'MALE', level: 1,
   experience: 0, unspentTrainingPoints: 0,
+  progression: { currentLevelExperience: 0, nextLevelExperience: 100, remainingExperience: 100, maximumLevel: false },
   startingAttributes: { strength: 11, dexterity: 5, intelligence: 5, constitution: 9, luck: 5 },
   trainedAttributes: { strength: 0, dexterity: 0, intelligence: 0, constitution: 0, luck: 0 },
   createdAt: '2026-11-12T10:00:00Z', updatedAt: '2026-11-12T10:00:00Z',

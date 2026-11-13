@@ -1,5 +1,6 @@
 import type { CharacterResponse } from '../api/contracts';
 import { ClassEmblem } from '../ui/ClassEmblem';
+import { CharacterPortrait } from '../ui/CharacterPortrait';
 import { attributes, classes } from './creation';
 
 export function CharacterSelection({ characters, notice, refresh }: {
@@ -21,7 +22,10 @@ export function CharacterSelection({ characters, notice, refresh }: {
           aria-label={`Miejsce ${index + 1}${character ? `: ${character.name}` : ': puste'}`}>
           <div className="slot-topline"><span>Miejsce {['I', 'II', 'III'][index]}</span>
             <span>{character ? `Poziom ${character.level}` : 'Wolne'}</span></div>
-          <div className="slot-portrait"><ClassEmblem {...(character ? { characterClass: character.characterClass } : {})} /></div>
+          <div className="slot-portrait">{character
+            ? <CharacterPortrait characterClass={character.characterClass} gender={character.appearanceGender}
+                level={character.level} />
+            : <ClassEmblem />}</div>
           {character ? <>
             <h2>{character.name}</h2><p className="class-label">{classes[character.characterClass].label}</p>
             <dl className="mini-stats">{attributes.map(({ key, short, label }) => <div key={key}>

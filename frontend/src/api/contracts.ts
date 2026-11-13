@@ -10,6 +10,7 @@ export interface AccountResponse {
 export interface CredentialsRequest { email: string; password: string }
 export interface CsrfResponse { headerName: string; token: string }
 export type CharacterClass = 'WARRIOR' | 'ARCHER' | 'MAGE';
+export type AppearanceGender = 'MALE' | 'FEMALE';
 export interface Attributes {
   strength: number;
   dexterity: number;
@@ -20,15 +21,23 @@ export interface Attributes {
 export interface CreateCharacterRequest {
   name: string;
   characterClass: CharacterClass;
+  appearanceGender: AppearanceGender;
   startingAllocation: Attributes;
 }
 export interface CharacterResponse {
   id: string;
   name: string;
   characterClass: CharacterClass;
+  appearanceGender: AppearanceGender;
   level: number;
   experience: number;
   unspentTrainingPoints: number;
+  progression: {
+    currentLevelExperience: number;
+    nextLevelExperience: number;
+    remainingExperience: number;
+    maximumLevel: boolean;
+  };
   startingAttributes: Attributes;
   trainedAttributes: Attributes;
   createdAt: string;

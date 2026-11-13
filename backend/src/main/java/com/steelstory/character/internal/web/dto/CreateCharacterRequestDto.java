@@ -7,6 +7,9 @@ public record CreateCharacterRequestDto(
                 pattern = "^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$") String name,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, allowableValues = {"WARRIOR", "ARCHER", "MAGE"})
         String characterClass,
+        @Schema(allowableValues = {"MALE", "FEMALE"},
+                description = "Cosmetic appearance. Omitted or null uses FEMALE for ARCHER, MALE otherwise.")
+        String appearanceGender,
         @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Nonnegative integer points summing to 10.")
         StartingAllocationRequestDto startingAllocation
 ) {

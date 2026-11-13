@@ -1,4 +1,4 @@
-import type { Attributes, CharacterClass, CreateCharacterRequest } from '../api/contracts.ts';
+import type { AppearanceGender, Attributes, CharacterClass, CreateCharacterRequest } from '../api/contracts.ts';
 
 export const attributes: { key: keyof Attributes; label: string; short: string }[] = [
   { key: 'strength', label: 'Siła', short: 'STR' },
@@ -13,6 +13,8 @@ export const classes: Record<CharacterClass, { label: string; description: strin
   MAGE: { label: 'Mag', description: 'Tajemnice różdżek i ksiąg.', attribute: 'Inteligencja' },
 };
 export const characterClasses: CharacterClass[] = ['WARRIOR', 'ARCHER', 'MAGE'];
+export const appearanceGenders: AppearanceGender[] = ['MALE', 'FEMALE'];
+export const genderLabels: Record<AppearanceGender, string> = { MALE: 'Mężczyzna', FEMALE: 'Kobieta' };
 export function emptyAllocation(): Attributes {
   return { strength: 0, dexterity: 0, intelligence: 0, constitution: 0, luck: 0 };
 }
@@ -27,10 +29,11 @@ export function adjustAllocation(allocation: Attributes, key: keyof Attributes, 
 export function validCharacterName(name: string): boolean {
   return name.length >= 3 && name.length <= 20 && /^[A-Za-z0-9]+(?: [A-Za-z0-9]+)*$/.test(name);
 }
-export function creationRequest(name: string, characterClass: CharacterClass, allocation: Attributes): CreateCharacterRequest {
+export function creationRequest(name: string, characterClass: CharacterClass, appearanceGender: AppearanceGender,
+  allocation: Attributes): CreateCharacterRequest {
   if (!validCharacterName(name) || remainingPoints(allocation) !== 0 ||
       attributes.some(({ key }) => !Number.isInteger(allocation[key]) || allocation[key] < 0)) {
     throw new Error('Invalid character creation input');
   }
-  return { name, characterClass, startingAllocation: { ...allocation } };
+  return { name, characterClass, appearanceGender, startingAllocation: { ...allocation } };
 }

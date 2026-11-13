@@ -1,6 +1,6 @@
 # Development guidelines
 
-Status: Architecture APPROVED; Milestone 2B.2 character creation backend complete. Milestone 2B.3 authorizes the authentication and character frontend. Later gameplay remains outside scope.
+Status: Architecture APPROVED; Milestone 2B.2 and the Milestone 2B.3 frontend are complete. Owner-confirmed soft deletion and the class/gender portrait rework are authorized, including cosmetic appearance persistence. Milestone 3A also authorizes XP/level progression and explicitly enabled local testing; later gameplay remains outside scope.
 
 ## Work in small domain slices
 
@@ -173,6 +173,8 @@ Keep money/large counters as decimal strings at the JSON boundary. Show server-p
 
 Keep authentication cookies out of JavaScript, send CSRF tokens correctly, and treat all frontend configuration as public. Do not render untrusted HTML. Start with ordinary requests and polling; add transport/state libraries when they solve an existing problem.
 
+The character API client attaches CSRF to DELETE as well as POST. Never automatically replay deletion after an uncertain response; check the authoritative detail/list first. Use the themed exact-name modal, not `confirm()`. Native modal focus/inert behavior and focus restoration are covered by browser tests. Active reads/cap checks must consistently exclude deleted rows, while name uniqueness must include them. See [ADR 0005](adr/0005-character-soft-deletion.md). Original portrait files and exact generation prompts are documented in [current portrait direction and prompts](art/portrait-system-rework.md); register only shipped tiers for each class/gender pair in `portraits.ts` so missing tiers fall back within the same appearance without broken image requests. New assets use 3:4 framing and local WebP files. Keep tier 1 available for every pair. The creation UI sends explicit appearanceGender; preserve the documented omitted/null compatibility default at the backend boundary and verify migration history plus saved appearance after reload. See [ADR 0006](adr/0006-character-appearance.md).
+
 ### OpenAPI contract workflow
 
 OpenAPI documentation is required for implemented public endpoints. Milestone 1 adopts springdoc 3.2.0 and an integration-test export compared structurally with `docs/api/openapi.json`; see [ADR 0002](adr/0002-tech-stack.md#milestone-1-implementation-record). Keep HTTP documentation annotations in web DTOs/adapters, not pure domain code. Document security, idempotency, errors, pagination, dates and amounts when those features exist. The current status endpoint is public and read-only. Exclude internal grants and wallet primitives from the public contract.
@@ -201,7 +203,7 @@ Docker Compose is the default local dependency environment; developers may run J
 
 Update domain rules, API behavior and operational instructions in the same change when affected. Record consequential decisions as ADRs with status, context, alternatives and consequences; preserve review amendments so a changed proposal is distinguishable from an approved requirement. Do not rewrite accepted history to conceal a reversal. Keep README truthful about what runs today.
 
-A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 2B.3 authentication and character UI; later gameplay features require separate authorization.
+A change is ready when its scope is clear, relevant tests pass, boundaries remain enforced, migrations and retry behavior are reviewed where applicable, and documentation matches behavior. Explain any unrun verification or remaining blocker. Stop after Milestone 3A XP/level progression; later gameplay features require separate authorization.
 
 ## Identity security conventions
 
@@ -216,3 +218,24 @@ IdentityService retains TransactionTemplate because the transaction should begin
 Do not log request bodies, hashes, cookies, CSRF tokens or rejected database rows. Sensitive request/hash/CSRF values have redacted toString methods; unexpected-error logging records exception class only because driver/parser messages may contain data. Do not enable JDBC bind-parameter or HTTP body/header trace logging with real users. Authentication tests use synthetic data.
 
 Document real flattened ProblemDetail JSON, explicit CSRF headers and cookie authentication. Hide framework-injected arguments from OpenAPI. Review the old endpoint/schema nodes before accepting a newly exported snapshot.
+
+## Milestone 3A progression discipline
+
+Keep the provisional XP formula exclusively in `ExperienceCurve`. All character
+progression writes go through the immutable aggregate and transactional trusted
+application use case. Lock account guard before character row, including deletion;
+never add an unlocked read/modify/write path. A row lock prevents lost updates,
+not duplicate event delivery. Add deduplication only with a real authoritative
+reward source and its permanent event identity, in the same transaction as XP.
+
+The local XP controller requires both `local` and `steelstory.dev.xp.enabled=true`;
+missing property means disabled. Preserve session, active-account, owner and CSRF
+checks. The Vite panel requires DEV, `VITE_DEV_XP_ENABLED=true` and a loopback host.
+Its dynamic import must disappear from production output; `npm run build` checks
+that the panel/endpoint strings are absent. No production bundle or player API may
+supply arbitrary XP. Never automatically replay an uncertain award.
+
+Browser tests run a normal Vite server on 5173 and an explicitly enabled test
+server on 5174. The real-backend E2E suite requires the backend local XP opt-in;
+see [Milestone 3A commands](milestones/3a-character-progression.md). Use Edge via
+`PLAYWRIGHT_CHANNEL=msedge` on Windows or the installed Playwright Chromium in CI.

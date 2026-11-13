@@ -15,7 +15,7 @@ export class ApiClient {
 
   private async request<T>(path: string, method = 'GET', body?: unknown, protectedRequest = true): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json, application/problem+json' };
-    if (method === 'POST') {
+    if (method === 'POST' || method === 'DELETE') {
       if (!this.csrf) await this.refreshCsrf();
       if (!this.csrf) throw new ApiError(0, 'INVALID_RESPONSE');
       headers[this.csrf.headerName] = this.csrf.token;
@@ -42,7 +42,7 @@ export class ApiClient {
       } catch { /* A proxy failure may return HTML; never expose it to the player. */ }
       if (response.status === 401 || response.status === 403) this.csrf = null;
       if (response.status === 401 && protectedRequest) this.onExpired();
-      // Never replay POSTs: timeout/network failures may occur after a successful commit.
+      // Never replay mutations: timeout/network failures may occur after a successful commit.
       throw new ApiError(response.status, code);
     }
     if (response.status === 204) return undefined as T;
@@ -78,11 +78,16 @@ export class ApiClient {
     this.csrf = null;
   }
   listCharacters(): Promise<CharacterListResponse> { return this.request('/characters'); }
+  // Shared authenticated transport also used by separately bundled development tools.
+  post<T>(path: string, body: unknown): Promise<T> { return this.request(path, 'POST', body); }
   getCharacter(id: string): Promise<CharacterResponse> {
     return this.request(`/characters/${encodeURIComponent(id)}`);
   }
   createCharacter(request: CreateCharacterRequest): Promise<CharacterResponse> {
     return this.request('/characters', 'POST', request);
+  }
+  deleteCharacter(id: string): Promise<void> {
+    return this.request(`/characters/${encodeURIComponent(id)}`, 'DELETE');
   }
   async status(): Promise<BackendStatus> {
     const result = await this.request<BackendStatus>('/status', 'GET', undefined, false);

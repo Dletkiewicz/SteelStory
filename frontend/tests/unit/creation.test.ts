@@ -29,12 +29,12 @@ test('allocation allows all ten points in one attribute, bounds controls and res
 
 test('creation sends bonuses only and refuses incomplete, negative or fractional allocations', () => {
   const bonuses = { strength: 6, dexterity: 0, intelligence: 0, constitution: 4, luck: 0 };
-  assert.deepEqual(creationRequest('Dark Knight', 'WARRIOR', bonuses), {
-    name: 'Dark Knight', characterClass: 'WARRIOR', startingAllocation: bonuses,
+  assert.deepEqual(creationRequest('Dark Knight', 'WARRIOR', 'FEMALE', bonuses), {
+    name: 'Dark Knight', characterClass: 'WARRIOR', appearanceGender: 'FEMALE', startingAllocation: bonuses,
   });
   for (const allocation of [emptyAllocation(), { ...bonuses, strength: 5 }, { ...bonuses, strength: 7 },
     { ...bonuses, strength: 11, constitution: -1 }, { ...bonuses, strength: 5.5, constitution: 4.5 }]) {
-    assert.throws(() => creationRequest('Dark Knight', 'WARRIOR', allocation));
+    assert.throws(() => creationRequest('Dark Knight', 'WARRIOR', 'FEMALE', allocation));
   }
 });
 

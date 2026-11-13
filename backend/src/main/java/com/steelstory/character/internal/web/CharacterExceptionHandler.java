@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @Order(-1)
-@RestControllerAdvice(assignableTypes = CharacterController.class)
+@RestControllerAdvice(assignableTypes = {CharacterController.class, DevelopmentExperienceController.class})
 public class CharacterExceptionHandler {
     @ExceptionHandler(InvalidCharacterInputException.class)
     ProblemDetail invalidInput(InvalidCharacterInputException exception) {

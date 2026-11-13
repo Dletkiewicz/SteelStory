@@ -15,7 +15,7 @@
         "tags": [
           "character-controller"
         ],
-        "summary": "List owned characters in creation order",
+        "summary": "List active owned characters in creation order",
         "operationId": "listOwnCharacters",
         "responses": {
           "200": {
@@ -50,7 +50,7 @@
           "character-controller"
         ],
         "summary": "Create an owned character",
-        "description": "Distribute exactly 10 points above base 5. At most 3 characters per account.",
+        "description": "Distribute exactly 10 points above base 5. At most 3 active characters per account. Deleted names remain reserved.",
         "operationId": "createCharacter",
         "parameters": [
           {
@@ -443,7 +443,82 @@
             }
           },
           "404": {
-            "description": "Unknown or unowned character",
+            "description": "Unknown, deleted or unowned character",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "character-controller"
+        ],
+        "summary": "Soft-delete an owned character",
+        "description": "Frees an active slot and keeps the name reserved. No recovery operation exists. Repeated deletion returns 404.",
+        "operationId": "deleteOwnCharacter",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "X-CSRF-TOKEN",
+            "in": "header",
+            "description": "Token from getCsrfToken",
+            "required": true
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Character deleted"
+          },
+          "400": {
+            "description": "Invalid character ID",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required; account must be active",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Missing or invalid CSRF token",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CharacterProblemResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Unknown, deleted or unowned character",
             "content": {
               "application/problem+json": {
                 "schema": {
@@ -591,6 +666,14 @@
           "startingAllocation": {
             "$ref": "#/components/schemas/StartingAllocationRequestDto",
             "description": "Nonnegative integer points summing to 10."
+          },
+          "appearanceGender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ],
+            "description": "Cosmetic appearance. Omitted or null uses FEMALE for ARCHER, MALE otherwise."
           }
         },
         "required": [
@@ -727,17 +810,21 @@
           "level": {
             "type": "integer",
             "format": "int32",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 200
           },
           "experience": {
             "type": "integer",
             "format": "int64",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 264670000,
+            "description": "Total lifetime XP, capped at the level-200 threshold of the provisional curve."
           },
           "unspentTrainingPoints": {
             "type": "integer",
             "format": "int32",
-            "minimum": 0
+            "minimum": 0,
+            "maximum": 597
           },
           "startingAttributes": {
             "$ref": "#/components/schemas/CharacterAttributesResponseDto"
@@ -752,15 +839,27 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "appearanceGender": {
+            "type": "string",
+            "enum": [
+              "MALE",
+              "FEMALE"
+            ]
+          },
+          "progression": {
+            "$ref": "#/components/schemas/CharacterProgressionResponseDto"
           }
         },
         "required": [
+          "appearanceGender",
           "characterClass",
           "createdAt",
           "experience",
           "id",
           "level",
           "name",
+          "progression",
           "startingAttributes",
           "trainedAttributes",
           "unspentTrainingPoints",
@@ -929,6 +1028,36 @@
         "required": [
           "headerName",
           "token"
+        ]
+      },
+      "CharacterProgressionResponseDto": {
+        "type": "object",
+        "properties": {
+          "currentLevelExperience": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "nextLevelExperience": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "Incremental requirement, or zero at maximum level."
+          },
+          "remainingExperience": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0
+          },
+          "maximumLevel": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "currentLevelExperience",
+          "maximumLevel",
+          "nextLevelExperience",
+          "remainingExperience"
         ]
       }
     },

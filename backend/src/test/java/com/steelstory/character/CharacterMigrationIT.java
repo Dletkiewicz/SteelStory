@@ -38,7 +38,7 @@ class CharacterMigrationIT {
 
         Flyway current = Flyway.configure()
                 .dataSource(POSTGRES.getJdbcUrl(), POSTGRES.getUsername(), POSTGRES.getPassword()).load();
-        assertThat(current.migrate().migrationsExecuted).isEqualTo(1);
+        assertThat(current.migrate().migrationsExecuted).isEqualTo(3);
         assertThat(Arrays.stream(current.info().applied()).limit(4).map(MigrationInfo::getChecksum).toList())
                 .isEqualTo(checksums);
         assertThat(jdbcTemplate.queryForObject(
@@ -51,11 +51,11 @@ class CharacterMigrationIT {
         UUID characterId = UUID.randomUUID();
         jdbcTemplate.update("""
                 INSERT INTO steelstory.character_characters
-                    (id, account_id, name, character_class,
+                    (id, account_id, name, character_class, appearance_gender,
                      starting_strength, starting_dexterity, starting_intelligence, starting_constitution, starting_luck,
                      trained_strength, trained_dexterity, trained_intelligence, trained_constitution, trained_luck,
                      level, experience, unspent_training_points, created_at, updated_at)
-                VALUES (?, ?, 'Dark Knight', 'MAGE', 15, 5, 5, 5, 5, 0, 0, 0, 0, 0, 1, 0, 0, now(), now())
+                VALUES (?, ?, 'Dark Knight', 'MAGE', 'MALE', 15, 5, 5, 5, 5, 0, 0, 0, 0, 0, 1, 0, 0, now(), now())
                 """, characterId, accountId);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT canonical_name FROM steelstory.character_characters WHERE id = ?",
@@ -73,11 +73,11 @@ class CharacterMigrationIT {
 
         assertThatThrownBy(() -> jdbcTemplate.update("""
                 INSERT INTO steelstory.character_characters
-                    (id, account_id, name, character_class,
+                    (id, account_id, name, character_class, appearance_gender,
                      starting_strength, starting_dexterity, starting_intelligence, starting_constitution, starting_luck,
                      trained_strength, trained_dexterity, trained_intelligence, trained_constitution, trained_luck,
                      level, experience, unspent_training_points, created_at, updated_at)
-                SELECT ?, account_id, 'DARK KNIGHT', character_class,
+                SELECT ?, account_id, 'DARK KNIGHT', character_class, appearance_gender,
                        starting_strength, starting_dexterity, starting_intelligence,
                        starting_constitution, starting_luck,
                        trained_strength, trained_dexterity, trained_intelligence, trained_constitution, trained_luck,

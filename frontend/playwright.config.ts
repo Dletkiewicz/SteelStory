@@ -16,11 +16,19 @@ export default defineConfig({
   },
   projects: [
     { name: 'ui', testMatch: '**/ui.spec.ts' },
+    { name: 'progression', testMatch: '**/progression.spec.ts', use: { baseURL: 'http://127.0.0.1:5174' } },
     { name: 'integration', testMatch: '**/integration.spec.ts' },
   ],
-  webServer: {
+  webServer: [{
     command: 'npm run dev',
     url: 'http://127.0.0.1:5173',
-    reuseExistingServer: !process.env.CI,
-  },
+    env: { VITE_DEV_XP_ENABLED: 'false' },
+    // Tests own both servers so a user's opt-in flag cannot alter visibility assertions.
+    reuseExistingServer: false,
+  }, {
+    command: 'npm run dev -- --port 5174',
+    url: 'http://127.0.0.1:5174',
+    env: { VITE_DEV_XP_ENABLED: 'true' },
+    reuseExistingServer: false,
+  }],
 });

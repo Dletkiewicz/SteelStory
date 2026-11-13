@@ -6,9 +6,9 @@ import { CharacterCreator } from './CharacterCreator';
 import { CharacterSelection } from './CharacterSelection';
 import { useCharacters } from './useCharacters';
 
-export function CharactersPage({ creating }: { creating: boolean }) {
+export function CharactersPage({ creating, initialNotice = '' }: { creating: boolean; initialNotice?: string }) {
   const [revision, setRevision] = useState(0);
-  const [notice, setNotice] = useState('');
+  const [notice, setNotice] = useState(initialNotice);
   const { result, reload } = useCharacters(revision, creating);
 
   function created(character: CharacterResponse) {
